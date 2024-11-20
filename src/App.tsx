@@ -87,11 +87,11 @@ export default function App() {
 				/>
 			</div>
 			{/* App purpose */}
-			<p className="max-w-2xl mx-auto mt-8 text-md text-center text-gray-600 font-semibold mb-12 px-8">
+			<p className="max-w-2xl mx-auto text-md text-center text-gray-600 font-semibold mt-8 mb-20 px-8">
 				Check the validity of a product using its barcode.
 			</p>
 			<footer className="bg-gray-800 text-white py-4 text-center fixed bottom-0 w-full">
-				<p className="text-sm">
+				<p className="text-xs">
 					Made with ❤️ by abumanga project <br />
 					&copy; {new Date().getFullYear()} Food Check. All rights
 					reserved.
