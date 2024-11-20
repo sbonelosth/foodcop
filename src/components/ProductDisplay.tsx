@@ -36,7 +36,7 @@ const ProductDisplay: React.FC<ProductDisplayProps> = ({
 	return (
 		<div className="bg-gray-100 rounded-lg p-6 space-y-4">
 			<div className="flex items-center justify-between">
-				<h2 className="text-xl font-semibold">{product.name}</h2>
+				<h2 className="text-xl font-semibold capitalize">{product.name}</h2>
 				{product.isValid ? (
 					<CheckCircle className="w-6 h-6 text-green-500" />
 				) : (
@@ -48,7 +48,7 @@ const ProductDisplay: React.FC<ProductDisplayProps> = ({
 				<img
 					src={product.image}
 					alt={product.name}
-					className="w-full h-48 object-contain rounded-lg"
+					className="w-full h-60 object-contain rounded-lg bg-gray-200"
 				/>
 			)}
 
