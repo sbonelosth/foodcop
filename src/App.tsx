@@ -87,7 +87,7 @@ export default function App() {
 				/>
 			</div>
 			{/* App purpose */}
-			<p className="max-w-2xl mx-auto mt-8 text-lg text-center text-gray-600 font-semibold">
+			<p className="max-w-2xl mx-auto mt-8 text-md text-center text-gray-600 font-semibold mb-12 px-8">
 				Check the validity of a product using its barcode.
 			</p>
 			<footer className="bg-gray-800 text-white py-4 text-center fixed bottom-0 w-full">
