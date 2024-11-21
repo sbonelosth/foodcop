@@ -1,5 +1,5 @@
 export interface Product {
-	name: string;
+    name: string;
 	manufacturer: string;
 	image?: string;
 	countryCode: string;

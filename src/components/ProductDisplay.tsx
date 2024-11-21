@@ -39,14 +39,15 @@ const ProductDisplay: React.FC<ProductDisplayProps> = ({
 				<h2 className="text-xl font-semibold capitalize">
 					{product.name}
 				</h2>
-				{product.isValid ? (
+				{product.isValid && product.found && (
 					<div className="flex items-center space-x-2">
 						<span className="text-sm font-medium text-green-500">
 							Safe
 						</span>
 						<CheckCircle className="w-6 h-6 text-green-500" />
 					</div>
-				) : (
+				)}
+				{showCounterfeitWarning && (
 					<div className="flex items-center space-x-2">
 						<span className="text-sm font-medium text-yellow-500">
 							Not Safe

@@ -159,18 +159,23 @@ export const validateBarcode = (
 export const fetchProductInfo = async (barcode: string): Promise<any> => {
 	try {
 		const response = await fetch(
-			`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`
+			`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`
 		);
+        
 		const data = await response.json();
 
 		if (data.status === 1) {
 			return {
 				name: data.product.product_name || "Unknown Product",
-				manufacturer: data.product.brands || "Unknown Manufacturer",
+				manufacturer:
+					data.product.brands ||
+					data.product.brand_owner ||
+					"Unknown Manufacturer",
 				image: data.product.image_url,
 				found: true,
 			};
 		}
+
 		throw new Error("Product not found");
 	} catch (error) {
 		return {
