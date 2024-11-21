@@ -93,7 +93,7 @@ export default function App() {
 			<footer className="bg-gray-800 text-white py-4 text-center fixed bottom-0 w-full">
 				<p className="text-xs">
 					Made with ❤️ by <a href="https://sbonelorsm.web.app" className="underline pointer">abumanga project</a> <br />
-					&copy; {new Date().getFullYear()} Safe Food. All rights
+					&copy; {new Date().getFullYear()} Food Cop. All rights
 					reserved.
 				</p>
 			</footer>
