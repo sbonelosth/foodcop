@@ -36,11 +36,23 @@ const ProductDisplay: React.FC<ProductDisplayProps> = ({
 	return (
 		<div className="bg-gray-100 rounded-lg p-6 space-y-4">
 			<div className="flex items-center justify-between">
-				<h2 className="text-xl font-semibold capitalize">{product.name}</h2>
+				<h2 className="text-xl font-semibold capitalize">
+					{product.name}
+				</h2>
 				{product.isValid ? (
-					<CheckCircle className="w-6 h-6 text-green-500" />
+					<div className="flex items-center space-x-2">
+						<span className="text-sm font-medium text-green-500">
+							Safe
+						</span>
+						<CheckCircle className="w-6 h-6 text-green-500" />
+					</div>
 				) : (
-					<AlertTriangle className="w-6 h-6 text-yellow-500" />
+					<div className="flex items-center space-x-2">
+						<span className="text-sm font-medium text-yellow-500">
+							Not Safe
+						</span>
+						<AlertTriangle className="w-6 h-6 text-yellow-500" />
+					</div>
 				)}
 			</div>
 

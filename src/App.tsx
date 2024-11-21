@@ -33,7 +33,9 @@ export default function App() {
 
 	return (
 		<div className="min-h-screen bg-gray-100">
-			<div className="max-w-2xl mx-auto p-4 space-y-6 mt-12">
+            <div className="w-full h-[15vh] mt-8 bg-transparent logo bg-contain bg-center bg-no-repeat">
+            </div>
+			<div className="max-w-2xl mx-auto p-4 space-y-6">
 				<div className="bg-white rounded-lg shadow-lg p-6">
 					<h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
 						Product Verification
@@ -62,7 +64,7 @@ export default function App() {
 								isLoading ||
 								(barcode.length !== 8 && barcode.length !== 13)
 							}
-							className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+							className="w-full px-4 py-2 bg-[#8CC342E1] text-white rounded-lg hover:bg-[#8CC342] focus:ring-2 focus:ring-[#8CC342] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
 							{isLoading ? (
 								<>
 									<Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -88,8 +90,8 @@ export default function App() {
 			</div>
 			<footer className="bg-gray-800 text-white py-4 text-center fixed bottom-0 w-full">
 				<p className="text-xs">
-					Made with ❤️ by abumanga project <br />
-					&copy; {new Date().getFullYear()} Food Check. All rights
+					Made with ❤️ by <a href="https://sbonelorsm.web.app" className="underline pointer">abumanga project</a> <br />
+					&copy; {new Date().getFullYear()} Safe Food. All rights
 					reserved.
 				</p>
 			</footer>

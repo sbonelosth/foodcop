@@ -6,6 +6,11 @@ body {
     @apply bg-gray-100;
 }
 
+.logo {
+    background-image: url('./assets/logo.svg');
+    background-size: 50%;
+}
+
 * {
     font-family: 'Montserrat', sans-serif;
 }
