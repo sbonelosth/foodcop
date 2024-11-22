@@ -1,6 +1,7 @@
 export interface Product {
     name: string;
 	manufacturer: string;
+	allergens?: string;
 	image?: string;
 	countryCode: string;
 	countryName: string;

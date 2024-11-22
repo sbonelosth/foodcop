@@ -90,6 +90,11 @@ const ProductDisplay: React.FC<ProductDisplayProps> = ({
 								<span>{product.countryName}</span>
 							</div>
 						</div>
+
+						<div className="flex items-center space-x-2">
+							<span className="font-medium">Allergens:</span>
+							<span className="capitalize">{product.allergens}</span>
+						</div>
 					</>
 				)}
 

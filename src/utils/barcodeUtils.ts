@@ -166,12 +166,14 @@ export const fetchProductInfo = async (barcode: string): Promise<any> => {
 
 		if (data.status === 1) {
 			const name = (data.product.product_type === "food") ? data.product.product_name || "Unknown Product" : "Non-food Product";
+			const allergens = data.product.allergens.slice(3);
 			return {
 				name,
 				manufacturer:
 					data.product.brands ||
 					data.product.brand_owner ||
 					"Unknown Manufacturer",
+				allergens: allergens || "Unknown Allergens",
 				image: data.product.image_url,
 				found: true,
 			};
