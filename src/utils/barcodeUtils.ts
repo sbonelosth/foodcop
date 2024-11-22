@@ -165,8 +165,9 @@ export const fetchProductInfo = async (barcode: string): Promise<any> => {
 		const data = await response.json();
 
 		if (data.status === 1) {
+			const name = (data.product.product_type === "food") ? data.product.product_name || "Unknown Product" : "Non-food Product";
 			return {
-				name: data.product.product_name || "Unknown Product",
+				name,
 				manufacturer:
 					data.product.brands ||
 					data.product.brand_owner ||
@@ -178,8 +179,9 @@ export const fetchProductInfo = async (barcode: string): Promise<any> => {
 
 		throw new Error("Product not found");
 	} catch (error) {
+		console.error("Error fetching product info:", error);
 		return {
-			name: "Unknown Product",
+			name: "Non-food Product",
 			manufacturer: "Unknown Manufacturer",
 			image: undefined,
 			found: false,

@@ -37,16 +37,19 @@ const ProductDisplay: React.FC<ProductDisplayProps> = ({
 		<div className="bg-gray-100 rounded-lg p-6 space-y-4">
 			<div className="flex items-center justify-between">
 				<h2 className="text-xl font-semibold capitalize">
-					{product.name}
+					{product.isValid && product.name}
+					{!product.isValid && "Unknown Product"}
 				</h2>
-				{product.isValid && product.found && (
-					<div className="flex items-center space-x-2">
-						<span className="text-sm font-medium text-green-500">
-							Safe
-						</span>
-						<CheckCircle className="w-6 h-6 text-green-500" />
-					</div>
-				)}
+				{product.isValid &&
+					product.found &&
+					product.name !== "Non-food Product" && (
+						<div className="flex items-center space-x-2">
+							<span className="text-sm font-medium text-green-500">
+								Safe
+							</span>
+							<CheckCircle className="w-6 h-6 text-green-500" />
+						</div>
+					)}
 				{showCounterfeitWarning && (
 					<div className="flex items-center space-x-2">
 						<span className="text-sm font-medium text-yellow-500">
@@ -57,7 +60,7 @@ const ProductDisplay: React.FC<ProductDisplayProps> = ({
 				)}
 			</div>
 
-			{product.image && (
+			{product.image && product.name !== "Non-food Product" && (
 				<img
 					src={product.image}
 					alt={product.name}
@@ -66,24 +69,28 @@ const ProductDisplay: React.FC<ProductDisplayProps> = ({
 			)}
 
 			<div className="space-y-2">
-				<div className="flex items-center space-x-2">
-					<span className="font-medium">Manufacturer:</span>
-					<span>{product.manufacturer}</span>
-				</div>
-
-				{product.countryCode && (
-					<div className="flex items-center space-x-2">
-						<span className="font-medium">Country of Origin:</span>
+				{product.countryCode && product.name !== "Non-food Product" && (
+					<>
 						<div className="flex items-center space-x-2">
-							<span
-								className="text-2xl"
-								role="img"
-								aria-label={`${product.countryName} flag`}>
-								{getFlagEmoji(product.countryCode)}
-							</span>
-							<span>{product.countryName}</span>
+							<span className="font-medium">Manufacturer:</span>
+							<span>{product.manufacturer}</span>
 						</div>
-					</div>
+
+						<div className="flex items-center space-x-2">
+							<span className="font-medium">
+								Country of Origin:
+							</span>
+							<div className="flex items-center space-x-2">
+								<span
+									className="text-2xl"
+									role="img"
+									aria-label={`${product.countryName} flag`}>
+									{getFlagEmoji(product.countryCode)}
+								</span>
+								<span>{product.countryName}</span>
+							</div>
+						</div>
+					</>
 				)}
 
 				{showCounterfeitWarning && (
