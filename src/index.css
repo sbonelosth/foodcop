@@ -9,3 +9,9 @@ body {
 * {
     font-family: 'Montserrat', sans-serif;
 }
+
+.logo {
+    /* make the logo responsive */
+    width: 50%;
+    max-width: 200px
+}

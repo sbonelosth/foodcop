@@ -34,7 +34,7 @@ export default function App() {
 
 	return (
 		<div className="min-h-screen bg-gray-100">
-            <img src={logo} alt="logo" className="mx-auto w-1/2" />
+            <img src={logo} alt="logo" className="mx-auto w-1/2 logo" />
 			<div className="max-w-2xl mx-auto p-4 space-y-6">
 				<div className="bg-white rounded-lg shadow-lg p-6">
 					<h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
