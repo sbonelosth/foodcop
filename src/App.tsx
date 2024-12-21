@@ -92,7 +92,7 @@ export default function App() {
             <div className="h-[30vh]"></div>
 			<footer className="bg-gray-800 text-white py-4 text-center fixed bottom-0 w-full">
 				<p className="text-xs">
-					Made with ❤️ by <a href="https://sbonelorsm.web.app" className="underline pointer">abumanga project</a> <br />
+					Made with ❤️ by <a href="https://goto.now/DqsxT" className="underline pointer">abumanga project</a> <br />
 					&copy; {new Date().getFullYear()} FoodCop. All rights
 					reserved.
 				</p>
