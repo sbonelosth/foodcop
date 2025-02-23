@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { ScanBarcode, Loader2 } from "lucide-react";
 import BarcodeScanner from "./components/BarcodeScanner";
 import ProductDisplay from "./components/ProductDisplay";
 import { validateBarcode, fetchProductInfo } from "./utils/barcodeUtils";
@@ -38,7 +38,7 @@ export default function App() {
 			<div className="max-w-2xl mx-auto p-4 space-y-6">
 				<div className="bg-white rounded-lg shadow-lg p-6">
 					<h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-						Product Verification
+						Product Scanner
 					</h1>
 
 					<div className="space-y-4">
@@ -54,7 +54,7 @@ export default function App() {
 							<button
 								onClick={() => setScannerOpen(true)}
 								className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-								<Camera className="w-5 h-5" />
+								<ScanBarcode className="w-5 h-5" />
 							</button>
 						</div>
 
@@ -68,10 +68,10 @@ export default function App() {
 							{isLoading ? (
 								<>
 									<Loader2 className="w-5 h-5 animate-spin mr-2" />
-									Verifying...
+									Checking...
 								</>
 							) : (
-								"Verify Barcode"
+								"Check Product"
 							)}
 						</button>
 					</div>
