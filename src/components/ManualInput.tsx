@@ -80,3 +80,5 @@ const ManualInput: React.FC<ManualInputProps> = ({
 		</div>
 	);
 };
+
+export default ManualInput
