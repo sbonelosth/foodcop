@@ -341,7 +341,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
                   </>
                 ) : (
                   /* Product Result Display */
-                  <div className="bg-white/95 backdrop-blur-sm rounded-lg p-6 max-w-sm mx-4 pointer-events-auto shadow-2xl">
+                  <div className="fixed bg-white/95 backdrop-blur-sm rounded-lg p-6 max-w-sm mx-4 pointer-events-auto shadow-2xl">
                     {isLoadingProduct ? (
                       <div className="text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div>
