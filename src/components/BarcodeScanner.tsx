@@ -12,17 +12,18 @@ interface BarcodeScannerProps {
 const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose }) => {
   const webcamRef = useRef<Webcam>(null);
   const codeReader = new BrowserMultiFormatReader();
-  const timeoutRef = useRef<NodeJS.Timeout>();
   const inactivityTimeoutRef = useRef<NodeJS.Timeout>();
+  const scanIntervalRef = useRef<NodeJS.Timeout>();
   
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
-  const [isScanning, setIsScanning] = useState(true);
   const [isFrozen, setIsFrozen] = useState(false);
+  const [frozenImage, setFrozenImage] = useState<string>('');
   const [scannedBarcode, setScannedBarcode] = useState<string>('');
   const [showShareButton, setShowShareButton] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [timeoutWarning, setTimeoutWarning] = useState(false);
   const [countdown, setCountdown] = useState(20);
+  const [scanResult, setScanResult] = useState<string>('');
 
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimeoutRef.current) {
@@ -57,9 +58,20 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
   }, [resetInactivityTimer]);
 
   const toggleFreeze = useCallback(() => {
-    setIsFrozen(prev => !prev);
+    if (!isFrozen) {
+      // Freeze: Take a screenshot
+      const imageSrc = webcamRef.current?.getScreenshot();
+      if (imageSrc) {
+        setFrozenImage(imageSrc);
+        setIsFrozen(true);
+      }
+    } else {
+      // Unfreeze: Resume live feed
+      setIsFrozen(false);
+      setFrozenImage('');
+    }
     resetInactivityTimer();
-  }, [resetInactivityTimer]);
+  }, [isFrozen, resetInactivityTimer]);
 
   const handleShare = useCallback(async () => {
     if (!scannedBarcode) return;
@@ -91,18 +103,20 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
     resetInactivityTimer();
   }, [scannedBarcode, resetInactivityTimer]);
 
-  const capture = useCallback(async () => {
-    if (!isScanning || isFrozen) return;
+  const scanForBarcode = useCallback(async () => {
+    if (isFrozen || !webcamRef.current) return;
     
-    const imageSrc = webcamRef.current?.getScreenshot();
+    const imageSrc = webcamRef.current.getScreenshot();
     if (imageSrc) {
       try {
         const result = await codeReader.decodeFromImage(undefined, imageSrc);
         if (result) {
           const barcode = result.getText();
           setScannedBarcode(barcode);
+          setScanResult(barcode);
           setShowShareButton(true);
-          setIsScanning(false);
+          
+          // Call the parent's onScan function
           onScan(barcode);
           
           // Auto-close after successful scan
@@ -112,9 +126,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
         }
       } catch (error) {
         // Continue scanning if no barcode is detected
+        setScanResult('');
       }
     }
-  }, [codeReader, onScan, onClose, isScanning, isFrozen]);
+  }, [codeReader, onScan, onClose, isFrozen]);
 
   const handleUserMedia = useCallback(() => {
     setPermissionDenied(false);
@@ -126,24 +141,37 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
     setPermissionDenied(true);
   }, []);
 
+  // Scanning interval effect
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isOpen && isScanning && !isFrozen) {
-      interval = setInterval(capture, 300); // Faster scanning
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isOpen, capture, isScanning, isFrozen]);
-
-  useEffect(() => {
-    if (isOpen) {
-      resetInactivityTimer();
+    if (isOpen && !isFrozen && !permissionDenied) {
+      scanIntervalRef.current = setInterval(scanForBarcode, 500);
+    } else {
+      if (scanIntervalRef.current) {
+        clearInterval(scanIntervalRef.current);
+      }
     }
     
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (scanIntervalRef.current) {
+        clearInterval(scanIntervalRef.current);
+      }
+    };
+  }, [isOpen, isFrozen, permissionDenied, scanForBarcode]);
+
+  // Cleanup effect
+  useEffect(() => {
+    if (isOpen) {
+      resetInactivityTimer();
+      setScannedBarcode('');
+      setScanResult('');
+      setShowShareButton(false);
+      setIsFrozen(false);
+      setFrozenImage('');
+    }
+    
+    return () => {
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+      if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
       codeReader.reset();
     };
   }, [isOpen, resetInactivityTimer, codeReader]);
@@ -163,7 +191,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
         <div className="flex items-center space-x-4">
           <button
             onClick={toggleCamera}
-            className="p-3 bg-black/30 hover:bg-black/50 rounded-full transition-colors backdrop-blur-sm"
+            className="p-3 bg-black/30 hover:bg-black/50 rounded-full transition-colors backdrop-blur-sm scanner-button"
             title="Switch camera"
           >
             <RotateCcw className="w-6 h-6 text-white" />
@@ -177,7 +205,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
         
         <button
           onClick={onClose}
-          className="p-3 bg-black/30 hover:bg-black/50 rounded-full transition-colors backdrop-blur-sm"
+          className="p-3 bg-black/30 hover:bg-black/50 rounded-full transition-colors backdrop-blur-sm scanner-button"
         >
           <X className="w-6 h-6 text-white" />
         </button>
@@ -212,25 +240,34 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
           </div>
         ) : (
           <>
-            <Webcam
-              ref={webcamRef}
-              screenshotFormat="image/jpeg"
-              className="w-full h-full object-cover"
-              videoConstraints={videoConstraints}
-              onUserMedia={handleUserMedia}
-              onUserMediaError={handleUserMediaError}
-              style={{ filter: isFrozen ? 'brightness(0.7)' : 'none' }}
-            />
+            {/* Live Camera Feed or Frozen Image */}
+            {isFrozen && frozenImage ? (
+              <img 
+                src={frozenImage} 
+                alt="Frozen frame" 
+                className="w-full h-full object-cover camera-transition"
+              />
+            ) : (
+              <Webcam
+                ref={webcamRef}
+                screenshotFormat="image/jpeg"
+                className="w-full h-full object-cover camera-transition"
+                videoConstraints={videoConstraints}
+                onUserMedia={handleUserMedia}
+                onUserMediaError={handleUserMediaError}
+              />
+            )}
             
             {/* Scanning Frame */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="relative">
                 {/* Instructions */}
-                <div className="mt-4 text-center pb-4">
+                <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 text-center">
                   <p className="text-white text-sm bg-black/50 px-3 py-1 rounded backdrop-blur-sm">
                     {isFrozen ? 'Frame frozen - tap capture to resume' : 'Position barcode within frame'}
                   </p>
                 </div>
+                
                 {/* Main scanning frame */}
                 <div className="w-64 h-40 border-2 border-white/70 rounded-lg relative">
                   {/* Corner indicators */}
@@ -240,9 +277,19 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
                   <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-green-400 rounded-br-lg"></div>
                   
                   {/* Scanning line animation */}
-                  {isScanning && !isFrozen && (
+                  {!isFrozen && !scannedBarcode && (
                     <div className="absolute inset-0 overflow-hidden rounded-lg">
-                      <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-green-400 to-transparent animate-pulse"></div>
+                      <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-green-400 to-transparent animate-scan"></div>
+                    </div>
+                  )}
+                  
+                  {/* Scan Result Display */}
+                  {scanResult && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-green-500/20 rounded-lg backdrop-blur-sm">
+                      <div className="bg-white/90 px-3 py-2 rounded text-center">
+                        <p className="text-xs text-gray-600 mb-1">Detected:</p>
+                        <p className="text-sm font-mono text-gray-900">{scanResult}</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -275,7 +322,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
             {showShareButton && (
               <button
                 onClick={handleShare}
-                className="p-4 bg-blue-500 hover:bg-blue-600 rounded-full transition-all transform hover:scale-105 shadow-lg"
+                className="p-4 bg-blue-500 hover:bg-blue-600 rounded-full transition-all scanner-button shadow-lg"
               >
                 <Share2 className="w-6 h-6 text-white" />
               </button>
@@ -284,7 +331,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
             {/* Capture Button */}
             <button
               onClick={toggleFreeze}
-              className={`p-3 rounded-full transition-all transform hover:scale-105 shadow-lg ${
+              className={`p-3 rounded-full transition-all scanner-button shadow-lg ${
                 isFrozen 
                   ? 'bg-red-500 hover:bg-red-600' 
                   : 'bg-white hover:bg-gray-100'
