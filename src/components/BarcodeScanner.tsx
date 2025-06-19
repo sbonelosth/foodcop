@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import { BrowserMultiFormatReader } from '@zxing/library';
-import { X, Camera, Share2, RotateCcw, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Share2, RotateCcw, CheckCircle, AlertTriangle } from 'lucide-react';
 import { validateBarcode, fetchProductInfo } from '../utils/barcodeUtils';
 import type { Product } from '../types';
 
@@ -34,7 +34,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [timeoutWarning, setTimeoutWarning] = useState(false);
   const [countdown, setCountdown] = useState(30);
-  const [scanResult, setScanResult] = useState<string>('');
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const [showResult, setShowResult] = useState(false);
@@ -62,13 +61,20 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
         setCountdown(count);
         if (count <= 0) {
           clearInterval(countdownIntervalRef.current!);
-          onClose();
+          // Reset to scanning state instead of closing
+          setShowResult(false);
+          setProduct(null);
+          setScannedBarcode('');
+          setShowShareButton(false);
+          setIsLoadingProduct(false);
+          setTimeoutWarning(false);
+          setCountdown(30);
         }
       }, 1000);
     }, 25000);
     
     inactivityTimeoutRef.current = warningTimeout;
-  }, [onClose]);
+  }, []);
 
   const toggleCamera = useCallback(() => {
     setFacingMode(current => current === 'environment' ? 'user' : 'environment');
@@ -125,7 +131,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
     setShowResult(false);
     setProduct(null);
     setScannedBarcode('');
-    setScanResult('');
     setShowShareButton(false);
     setIsLoadingProduct(false);
     resetInactivityTimer();
@@ -133,7 +138,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
 
   const handleBarcodeDetected = useCallback(async (barcode: string) => {
     setScannedBarcode(barcode);
-    setScanResult(barcode);
     setIsLoadingProduct(true);
     setShowResult(true);
     
@@ -154,7 +158,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
       setProduct(productData);
       setShowShareButton(true);
       
-      // Call parent's onScan but don't close the camera
+      // Call parent's onScan
       onScan(barcode);
     } catch (error) {
       console.error('Error fetching product info:', error);
@@ -211,14 +215,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
   useEffect(() => {
     if (isOpen) {
       resetInactivityTimer();
-      setScannedBarcode('');
-      setScanResult('');
-      setShowShareButton(false);
-      setIsFrozen(false);
-      setFrozenImage('');
-      setShowResult(false);
-      setProduct(null);
-      setIsLoadingProduct(false);
     }
     
     return () => {
@@ -238,9 +234,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
   };
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+    <div className="fixed inset-0 bg-black z-40 flex flex-col">
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4 bg-gradient-to-b from-black/50 to-transparent">
+      <div className="absolute top-16 left-4 right-16 z-10 flex justify-start items-center">
         <div className="flex items-center space-x-4">
           <button
             onClick={toggleCamera}
@@ -255,20 +251,13 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
             </span>
           )}
         </div>
-        
-        <button
-          onClick={onClose}
-          className="p-3 bg-black/30 hover:bg-black/50 rounded-full transition-colors backdrop-blur-sm scanner-button"
-        >
-          <X className="w-6 h-6 text-white" />
-        </button>
       </div>
 
       {/* Timeout Warning */}
       {timeoutWarning && (
         <div className="absolute top-20 left-4 right-4 z-10 bg-red-500/90 text-white p-3 rounded-lg backdrop-blur-sm">
           <p className="text-center font-medium">
-            Camera will close in {countdown} seconds due to inactivity
+            Scanner will reset in {countdown} seconds due to inactivity
           </p>
         </div>
       )}
@@ -278,7 +267,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
         {permissionDenied ? (
           <div className="flex-1 flex items-center justify-center bg-gray-900 text-white p-8">
             <div className="text-center">
-              <Camera className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <div className="w-16 h-16 mx-auto mb-4 bg-gray-400 rounded-full flex items-center justify-center">
+                <span className="text-2xl">📷</span>
+              </div>
               <h3 className="text-xl font-semibold mb-2">Camera Access Denied</h3>
               <p className="text-gray-300 mb-4">
                 Please allow camera access to scan barcodes
@@ -341,7 +332,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
                   </>
                 ) : (
                   /* Product Result Display */
-                  <div className="fixed bg-white/95 backdrop-blur-sm rounded-lg p-6 max-w-sm mx-4 pointer-events-auto shadow-2xl">
+                  <div className="bg-white/95 backdrop-blur-sm rounded-lg p-6 max-w-sm mx-4 pointer-events-auto shadow-2xl">
                     {isLoadingProduct ? (
                       <div className="text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div>
@@ -450,13 +441,13 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
             {/* Capture Button */}
             <button
               onClick={toggleFreeze}
-              className={`p-3 rounded-full transition-all scanner-button shadow-lg ${
+              className={`p-4 rounded-full transition-all scanner-button shadow-lg ${
                 isFrozen 
                   ? 'bg-red-500 hover:bg-red-600' 
                   : 'bg-white hover:bg-gray-100'
               }`}
             >
-              <div className={`w-6 h-6 rounded-full ${
+              <div className={`w-8 h-8 rounded-full ${
                 isFrozen ? 'bg-white' : 'bg-red-500'
               }`}></div>
             </button>

@@ -1,21 +1,19 @@
 import { useState } from "react";
-import { ScanBarcode, Loader2 } from "lucide-react";
+import { Keyboard, Loader2 } from "lucide-react";
 import BarcodeScanner from "./components/BarcodeScanner";
-import ProductDisplay from "./components/ProductDisplay";
+import ManualInput from "./components/ManualInput";
 import { validateBarcode, fetchProductInfo } from "./utils/barcodeUtils";
 import type { Product } from "./types";
 import logo from "../public/assets/logo.svg";
 
 export default function App() {
-	const [barcode, setBarcode] = useState("");
-	const [isScannerOpen, setScannerOpen] = useState(false);
+	const [showManualInput, setShowManualInput] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [product, setProduct] = useState<Product | null>(null);
 
 	const handleBarcodeSubmit = async (inputBarcode: string) => {
 		setIsLoading(true);
-		const { isValid, countryCode, countryName } =
-			validateBarcode(inputBarcode);
+		const { isValid, countryCode, countryName } = validateBarcode(inputBarcode);
 
 		try {
 			const productInfo = await fetchProductInfo(inputBarcode);
@@ -32,71 +30,54 @@ export default function App() {
 		}
 	};
 
-	return (
-		<div className="min-h-screen bg-gray-100">
-            <img src={logo} alt="logo" className="mx-auto w-1/2 logo" />
-			<div className="max-w-2xl mx-auto p-4">
-				<div className="bg-white rounded-lg shadow-lg p-6">
-					<h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-						Product Scanner
-					</h1>
-
-					<div className="space-y-4">
-						<div className="flex space-x-4">
-							<input
-								type="text"
-								value={barcode}
-								onChange={(e) => setBarcode(e.target.value)}
-								placeholder="Barcode"
-								className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-								maxLength={13}
-							/>
-							<button
-								onClick={() => setScannerOpen(true)}
-								className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-								<ScanBarcode className="w-6 h-6" />
-							</button>
-						</div>
-
-						<button
-							onClick={() => handleBarcodeSubmit(barcode)}
-							disabled={
-								isLoading ||
-								(barcode.length !== 8 && barcode.length !== 13)
-							}
-							className="w-full px-4 py-2 bg-[#8CC342E1] text-white rounded-lg hover:bg-[#8CC342] focus:ring-2 focus:ring-[#8CC342] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
-							{isLoading ? (
-								<>
-									<Loader2 className="w-5 h-5 animate-spin mr-2" />
-									Checking...
-								</>
-							) : (
-								"Check Product"
-							)}
-						</button>
-					</div>
-				</div>
-
-				<ProductDisplay product={product} isLoading={isLoading} />
-
-				<BarcodeScanner
-					isOpen={isScannerOpen}
-					onClose={() => setScannerOpen(false)}
-					onScan={(scannedBarcode) => {
-						setBarcode(scannedBarcode);
-						handleBarcodeSubmit(scannedBarcode);
-					}}
+	if (showManualInput) {
+		return (
+			<div className="min-h-screen bg-gray-100">
+				<img src={logo} alt="logo" className="mx-auto w-1/2 logo pt-4" />
+				<ManualInput
+					onSubmit={handleBarcodeSubmit}
+					onBackToCamera={() => setShowManualInput(false)}
+					product={product}
+					isLoading={isLoading}
 				/>
+				<div className="h-[10vh]"></div>
+				<footer className="bg-gray-800 text-white py-4 text-center fixed bottom-0 w-full">
+					<p className="text-xs">
+						Made with ❤️ by{" "}
+						<a href="https://goto.now/DqsxT" className="underline pointer">
+							abumanga project
+						</a>{" "}
+						<br />
+						&copy; {new Date().getFullYear()} FoodCop. All rights reserved.
+					</p>
+				</footer>
 			</div>
-            {/* empty space */}
-            <div className="h-[30vh]"></div>
-			<footer className="bg-gray-800 text-white py-4 text-center fixed bottom-0 w-full">
-				<p className="text-xs">
-					Made with ❤️ by <a href="https://goto.now/DqsxT" className="underline pointer">abumanga project</a> <br />
-					&copy; {new Date().getFullYear()} FoodCop. All rights
-					reserved.
-				</p>
-			</footer>
+		);
+	}
+
+	return (
+		<div className="min-h-screen bg-black">
+			{/* Logo overlay */}
+			<div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
+				<img src={logo} alt="FoodCop" className="w-32 h-auto" />
+			</div>
+
+			{/* Manual input button */}
+			<div className="absolute top-4 right-4 z-10">
+				<button
+					onClick={() => setShowManualInput(true)}
+					className="p-3 bg-black/30 hover:bg-black/50 rounded-full transition-colors backdrop-blur-sm"
+					title="Manual input"
+				>
+					<Keyboard className="w-6 h-6 text-white" />
+				</button>
+			</div>
+
+			<BarcodeScanner
+				isOpen={true}
+				onClose={() => {}} // No close functionality since this is the main interface
+				onScan={handleBarcodeSubmit}
+			/>
 		</div>
 	);
 }
