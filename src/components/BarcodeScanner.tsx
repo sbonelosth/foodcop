@@ -291,7 +291,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
                   : 'bg-white hover:bg-gray-100'
               }`}
             >
-              <div className={`w-8 h-8 rounded-full ${
+              <div className={`w-4 h-4 rounded-full ${
                 isFrozen ? 'bg-white' : 'bg-red-500'
               }`}></div>
             </button>
