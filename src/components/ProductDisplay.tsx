@@ -34,7 +34,7 @@ const ProductDisplay: React.FC<ProductDisplayProps> = ({
 	const showCounterfeitWarning = !product.isValid && !product.found;
 
 	return (
-		<div className="bg-gray-100 rounded-lg p-6 space-y-4">
+		<div className="p-6 space-y-4">
 			<div className="flex items-center justify-between">
 				<h2 className="text-xl font-semibold capitalize">
 					{product.isValid && product.name}

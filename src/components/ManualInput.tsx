@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { Loader2, ScanBarcode } from "lucide-react";
 import ProductDisplay from "./ProductDisplay";
 import type { Product } from "../types";
 
@@ -29,14 +29,14 @@ const ManualInput: React.FC<ManualInputProps> = ({
 			<div className="bg-white rounded-lg shadow-lg p-6">
 				<div className="flex items-center justify-between mb-6">
 					<h1 className="text-2xl font-bold text-gray-900">
-						Manual Product Scanner
+						Product Scanner
 					</h1>
 					<button
 						onClick={onBackToCamera}
-						className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+						className="p-2 text-black rounded-lg hover:bg-gray-600/40 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
 						title="Back to camera"
 					>
-						<Camera className="w-5 h-5" />
+						<ScanBarcode className="w-6 h-6" />
 					</button>
 				</div>
 

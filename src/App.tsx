@@ -63,7 +63,7 @@ export default function App() {
 			</div>
 
 			{/* Manual input button */}
-			<div className="absolute top-4 right-4 z-10">
+			<div className="absolute top-4 right-4 z-50">
 				<button
 					onClick={() => setShowManualInput(true)}
 					className="p-3 bg-black/30 hover:bg-black/50 rounded-full transition-colors backdrop-blur-sm"

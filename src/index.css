@@ -19,7 +19,7 @@ body {
 /* Custom animations for scanner */
 @keyframes scan-line {
     0% {
-        transform: translateY(-100%);
+        transform: translateY(0%);
     }
     100% {
         transform: translateY(100%);
