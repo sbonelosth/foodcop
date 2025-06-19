@@ -317,7 +317,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
                 {!showResult ? (
                   <>
                     {/* Instructions */}
-                    <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 text-center">
+                    <div className="w-full absolute -top-16 left-1/2 transform -translate-x-1/2 text-center">
                       <p className="text-white text-sm bg-black/50 px-3 py-1 rounded backdrop-blur-sm">
                         {isFrozen ? 'Frame frozen - tap capture to resume' : 'Position barcode within frame'}
                       </p>
