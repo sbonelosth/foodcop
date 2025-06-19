@@ -34,7 +34,7 @@ export const ProductResult: React.FC<ProductResultProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-gray-900 text-sm mr-4">
+        <h3 className="font-semibold text-gray-900 text-sm capitalize mr-4">
           {product.name !== "Non-food Product" ? product.name : "Unknown Product"}
         </h3>
         {product.isValid && product.found && product.name !== "Non-food Product" ? (
