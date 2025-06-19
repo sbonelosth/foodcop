@@ -1,7 +1,9 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import { BrowserMultiFormatReader } from '@zxing/library';
-import { X, Camera, Share2, RotateCcw } from 'lucide-react';
+import { X, Camera, Share2, RotateCcw, CheckCircle, AlertTriangle } from 'lucide-react';
+import { validateBarcode, fetchProductInfo } from '../utils/barcodeUtils';
+import type { Product } from '../types';
 
 interface BarcodeScannerProps {
   onScan: (barcode: string) => void;
@@ -9,11 +11,20 @@ interface BarcodeScannerProps {
   onClose: () => void;
 }
 
+const getFlagEmoji = (countryCode: string) => {
+  const codePoints = countryCode
+    .toUpperCase()
+    .split("")
+    .map((char) => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+};
+
 const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose }) => {
   const webcamRef = useRef<Webcam>(null);
   const codeReader = new BrowserMultiFormatReader();
   const inactivityTimeoutRef = useRef<NodeJS.Timeout>();
   const scanIntervalRef = useRef<NodeJS.Timeout>();
+  const countdownIntervalRef = useRef<NodeJS.Timeout>();
   
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [isFrozen, setIsFrozen] = useState(false);
@@ -22,32 +33,39 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
   const [showShareButton, setShowShareButton] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [timeoutWarning, setTimeoutWarning] = useState(false);
-  const [countdown, setCountdown] = useState(20);
+  const [countdown, setCountdown] = useState(30);
   const [scanResult, setScanResult] = useState<string>('');
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(false);
+  const [showResult, setShowResult] = useState(false);
 
   const resetInactivityTimer = useCallback(() => {
+    // Clear existing timers
     if (inactivityTimeoutRef.current) {
       clearTimeout(inactivityTimeoutRef.current);
     }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
     
     setTimeoutWarning(false);
-    setCountdown(20);
+    setCountdown(30);
     
-    // Start countdown at 15 seconds (5 seconds warning)
+    // Start countdown at 25 seconds (5 seconds warning)
     const warningTimeout = setTimeout(() => {
       setTimeoutWarning(true);
       let count = 5;
       setCountdown(count);
       
-      const countdownInterval = setInterval(() => {
+      countdownIntervalRef.current = setInterval(() => {
         count--;
         setCountdown(count);
         if (count <= 0) {
-          clearInterval(countdownInterval);
+          clearInterval(countdownIntervalRef.current!);
           onClose();
         }
       }, 1000);
-    }, 15000);
+    }, 25000);
     
     inactivityTimeoutRef.current = warningTimeout;
   }, [onClose]);
@@ -74,11 +92,11 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
   }, [isFrozen, resetInactivityTimer]);
 
   const handleShare = useCallback(async () => {
-    if (!scannedBarcode) return;
+    if (!scannedBarcode || !product) return;
     
     const shareData = {
       title: 'FoodCop - Scanned Product',
-      text: `I scanned a product with barcode: ${scannedBarcode}`,
+      text: `Product: ${product.name}\nBarcode: ${scannedBarcode}\nCountry: ${product.countryName}\nSafety: ${product.isValid && product.found ? 'Safe' : 'Not Safe'}`,
       url: window.location.href
     };
 
@@ -87,24 +105,66 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
         await navigator.share(shareData);
       } else {
         // Fallback: copy to clipboard
-        await navigator.clipboard.writeText(`Product barcode: ${scannedBarcode}\nScanned with FoodCop: ${window.location.href}`);
-        alert('Barcode information copied to clipboard!');
+        await navigator.clipboard.writeText(shareData.text + `\nScanned with FoodCop: ${window.location.href}`);
+        alert('Product information copied to clipboard!');
       }
     } catch (error) {
       console.error('Error sharing:', error);
       // Fallback: copy to clipboard
       try {
-        await navigator.clipboard.writeText(`Product barcode: ${scannedBarcode}\nScanned with FoodCop: ${window.location.href}`);
-        alert('Barcode information copied to clipboard!');
+        await navigator.clipboard.writeText(shareData.text + `\nScanned with FoodCop: ${window.location.href}`);
+        alert('Product information copied to clipboard!');
       } catch (clipboardError) {
         console.error('Clipboard error:', clipboardError);
       }
     }
     resetInactivityTimer();
-  }, [scannedBarcode, resetInactivityTimer]);
+  }, [scannedBarcode, product, resetInactivityTimer]);
+
+  const dismissResult = useCallback(() => {
+    setShowResult(false);
+    setProduct(null);
+    setScannedBarcode('');
+    setScanResult('');
+    setShowShareButton(false);
+    setIsLoadingProduct(false);
+    resetInactivityTimer();
+  }, [resetInactivityTimer]);
+
+  const handleBarcodeDetected = useCallback(async (barcode: string) => {
+    setScannedBarcode(barcode);
+    setScanResult(barcode);
+    setIsLoadingProduct(true);
+    setShowResult(true);
+    
+    // Reset timer to 30 seconds upon successful scan
+    resetInactivityTimer();
+    
+    try {
+      const { isValid, countryCode, countryName } = validateBarcode(barcode);
+      const productInfo = await fetchProductInfo(barcode);
+      
+      const productData: Product = {
+        ...productInfo,
+        isValid,
+        countryCode,
+        countryName,
+      };
+      
+      setProduct(productData);
+      setShowShareButton(true);
+      
+      // Call parent's onScan but don't close the camera
+      onScan(barcode);
+    } catch (error) {
+      console.error('Error fetching product info:', error);
+    } finally {
+      setIsLoadingProduct(false);
+    }
+  }, [onScan, resetInactivityTimer]);
 
   const scanForBarcode = useCallback(async () => {
-    if (isFrozen || !webcamRef.current) return;
+    if (isFrozen || !webcamRef.current || showResult) return;
     
     const imageSrc = webcamRef.current.getScreenshot();
     if (imageSrc) {
@@ -112,24 +172,13 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
         const result = await codeReader.decodeFromImage(undefined, imageSrc);
         if (result) {
           const barcode = result.getText();
-          setScannedBarcode(barcode);
-          setScanResult(barcode);
-          setShowShareButton(true);
-          
-          // Call the parent's onScan function
-          onScan(barcode);
-          
-          // Auto-close after successful scan
-          setTimeout(() => {
-            onClose();
-          }, 2000);
+          await handleBarcodeDetected(barcode);
         }
       } catch (error) {
         // Continue scanning if no barcode is detected
-        setScanResult('');
       }
     }
-  }, [codeReader, onScan, onClose, isFrozen]);
+  }, [codeReader, isFrozen, showResult, handleBarcodeDetected]);
 
   const handleUserMedia = useCallback(() => {
     setPermissionDenied(false);
@@ -143,7 +192,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
 
   // Scanning interval effect
   useEffect(() => {
-    if (isOpen && !isFrozen && !permissionDenied) {
+    if (isOpen && !isFrozen && !permissionDenied && !showResult) {
       scanIntervalRef.current = setInterval(scanForBarcode, 500);
     } else {
       if (scanIntervalRef.current) {
@@ -156,7 +205,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
         clearInterval(scanIntervalRef.current);
       }
     };
-  }, [isOpen, isFrozen, permissionDenied, scanForBarcode]);
+  }, [isOpen, isFrozen, permissionDenied, showResult, scanForBarcode]);
 
   // Cleanup effect
   useEffect(() => {
@@ -167,10 +216,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
       setShowShareButton(false);
       setIsFrozen(false);
       setFrozenImage('');
+      setShowResult(false);
+      setProduct(null);
+      setIsLoadingProduct(false);
     }
     
     return () => {
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
       if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
       codeReader.reset();
     };
@@ -258,76 +311,142 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
               />
             )}
             
-            {/* Scanning Frame */}
+            {/* Scanning Frame or Result Display */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="relative">
-                {/* Instructions */}
-                <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 text-center">
-                  <p className="text-white text-sm bg-black/50 px-3 py-1 rounded backdrop-blur-sm">
-                    {isFrozen ? 'Frame frozen - tap capture to resume' : 'Position barcode within frame'}
-                  </p>
-                </div>
-                
-                {/* Main scanning frame */}
-                <div className="w-64 h-40 border-2 border-white/70 rounded-lg relative">
-                  {/* Corner indicators */}
-                  <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-green-400 rounded-tl-lg"></div>
-                  <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-green-400 rounded-tr-lg"></div>
-                  <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-green-400 rounded-bl-lg"></div>
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-green-400 rounded-br-lg"></div>
-                  
-                  {/* Scanning line animation */}
-                  {!isFrozen && !scannedBarcode && (
-                    <div className="absolute inset-0 overflow-hidden rounded-lg">
-                      <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-green-400 to-transparent animate-scan"></div>
+                {!showResult ? (
+                  <>
+                    {/* Instructions */}
+                    <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 text-center">
+                      <p className="text-white text-sm bg-black/50 px-3 py-1 rounded backdrop-blur-sm">
+                        {isFrozen ? 'Frame frozen - tap capture to resume' : 'Position barcode within frame'}
+                      </p>
                     </div>
-                  )}
-                  
-                  {/* Scan Result Display */}
-                  {scanResult && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-green-500/20 rounded-lg backdrop-blur-sm">
-                      <div className="bg-white/90 px-3 py-2 rounded text-center">
-                        <p className="text-xs text-gray-600 mb-1">Detected:</p>
-                        <p className="text-sm font-mono text-gray-900">{scanResult}</p>
+                    
+                    {/* Main scanning frame */}
+                    <div className="w-64 h-40 border-2 border-white/70 rounded-lg relative">
+                      {/* Corner indicators */}
+                      <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-green-400 rounded-tl-lg"></div>
+                      <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-green-400 rounded-tr-lg"></div>
+                      <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-green-400 rounded-bl-lg"></div>
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-green-400 rounded-br-lg"></div>
+                      
+                      {/* Scanning line animation */}
+                      {!isFrozen && (
+                        <div className="absolute inset-0 overflow-hidden rounded-lg">
+                          <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-green-400 to-transparent animate-scan"></div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  /* Product Result Display */
+                  <div className="bg-white/95 backdrop-blur-sm rounded-lg p-6 max-w-sm mx-4 pointer-events-auto shadow-2xl">
+                    {isLoadingProduct ? (
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div>
+                        <p className="text-gray-600">Checking product...</p>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    ) : product ? (
+                      <div className="space-y-3">
+                        {/* Header with safety status */}
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-semibold text-gray-900 text-sm">
+                            {product.name !== "Non-food Product" ? product.name : "Unknown Product"}
+                          </h3>
+                          {product.isValid && product.found && product.name !== "Non-food Product" ? (
+                            <div className="flex items-center space-x-1">
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                              <span className="text-xs font-medium text-green-600">Safe</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-1">
+                              <AlertTriangle className="w-4 h-4 text-red-500" />
+                              <span className="text-xs font-medium text-red-600">Not Safe</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Product details */}
+                        {product.name !== "Non-food Product" && (
+                          <div className="space-y-2 text-xs">
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-600">Manufacturer:</span>
+                              <span className="text-gray-900 font-medium">{product.manufacturer}</span>
+                            </div>
+                            
+                            {product.countryCode && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-600">Country:</span>
+                                <div className="flex items-center space-x-1">
+                                  <span className="text-sm">{getFlagEmoji(product.countryCode)}</span>
+                                  <span className="text-gray-900 font-medium">{product.countryName}</span>
+                                </div>
+                              </div>
+                            )}
+                            
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-600">Allergens:</span>
+                              <span className="text-gray-900 font-medium">{product.allergens || "Unknown"}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Barcode */}
+                        <div className="bg-gray-100 p-2 rounded text-center">
+                          <p className="text-xs text-gray-600 mb-1">Barcode:</p>
+                          <p className="font-mono text-sm text-gray-900">{scannedBarcode}</p>
+                        </div>
+
+                        {/* Warning messages */}
+                        {!product.isValid && !product.found && (
+                          <div className="bg-red-50 border border-red-200 rounded p-2">
+                            <p className="text-red-700 text-xs">
+                              Warning: This product's barcode doesn't match GS1 database records. It might be counterfeit.
+                            </p>
+                          </div>
+                        )}
+
+                        {!product.isValid && product.found && (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
+                            <p className="text-yellow-700 text-xs">
+                              Note: This product was found but its prefix doesn't match the expected country of origin.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Action buttons */}
+                        <div className="flex space-x-2 pt-2">
+                          <button
+                            onClick={dismissResult}
+                            className="flex-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs rounded transition-colors"
+                          >
+                            Scan Another
+                          </button>
+                          {showShareButton && (
+                            <button
+                              onClick={handleShare}
+                              className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded transition-colors flex items-center space-x-1"
+                            >
+                              <Share2 className="w-3 h-3" />
+                              <span>Share</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Success Overlay */}
-            {scannedBarcode && (
-              <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center backdrop-blur-sm">
-                <div className="bg-white/90 p-6 rounded-lg text-center max-w-sm mx-4">
-                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Barcode Detected!</h3>
-                  <p className="text-sm text-gray-600 font-mono">{scannedBarcode}</p>
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
 
       {/* Bottom Controls */}
-      {!permissionDenied && (
+      {!permissionDenied && !showResult && (
         <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/50 to-transparent">
-          <div className="flex items-center justify-center space-x-8">
-            {/* Share Button */}
-            {showShareButton && (
-              <button
-                onClick={handleShare}
-                className="p-4 bg-blue-500 hover:bg-blue-600 rounded-full transition-all scanner-button shadow-lg"
-              >
-                <Share2 className="w-6 h-6 text-white" />
-              </button>
-            )}
-            
+          <div className="flex items-center justify-center">
             {/* Capture Button */}
             <button
               onClick={toggleFreeze}
