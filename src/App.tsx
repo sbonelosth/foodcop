@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Keyboard, Loader2 } from "lucide-react";
 import BarcodeScanner from "./components/BarcodeScanner";
 import ManualInput from "./components/ManualInput";
 import { validateBarcode, fetchProductInfo } from "./utils/barcodeUtils";
