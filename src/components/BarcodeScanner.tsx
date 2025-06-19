@@ -285,7 +285,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
             {/* Capture Button */}
             <button
               onClick={toggleFreeze}
-              className={`p-6 rounded-full transition-all transform hover:scale-105 shadow-lg ${
+              className={`p-3 rounded-full transition-all transform hover:scale-105 shadow-lg ${
                 isFrozen 
                   ? 'bg-red-500 hover:bg-red-600' 
                   : 'bg-white hover:bg-gray-100'
