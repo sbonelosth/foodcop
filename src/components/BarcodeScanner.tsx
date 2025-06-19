@@ -9,8 +9,9 @@ import { CaptureButton } from './CaptureButton';
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 import { useInactivityTimer } from '../hooks/useInactivityTimer';
 import type { BarcodeScannerProps } from '../types';
+import { Keyboard } from 'lucide-react';
 
-const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen }) => {
+const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose, setShowManualInput }) => {
   const webcamRef = useRef<Webcam>(null);
   const scanIntervalRef = useRef<ReturnType<typeof setInterval>>();
   
@@ -25,8 +26,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen }) => {
     product,
     isLoadingProduct,
     showShareButton,
-    scanForBarcode,
+    handleBarcodeDetected,
     resetScanner,
+    codeReader,
   } = useBarcodeScanner(onScan);
 
   const {
@@ -67,7 +69,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen }) => {
     };
 
     try {
-      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      if (navigator.share && navigator.canShare(shareData)) {
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(shareData.text + `\nScanned with FoodCop: ${window.location.href}`);
@@ -91,6 +93,26 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen }) => {
     resetInactivityTimer();
   }, [resetInactivityTimer, resetScanner]);
 
+  const scanForBarcode = useCallback(async () => {
+    if (isFrozen || !webcamRef.current || showResult) return;
+    
+    const imageSrc = webcamRef.current.getScreenshot();
+    if (imageSrc) {
+      try {
+        const result = await codeReader.decodeFromImage(undefined, imageSrc);
+        if (result) {
+          const barcode = result.getText();
+          const success = await handleBarcodeDetected(barcode);
+          if (success) {
+            setShowResult(true);
+          }
+        }
+      } catch (error) {
+        // Continue scanning if no barcode is detected
+      }
+    }
+  }, [codeReader, isFrozen, showResult, handleBarcodeDetected]);
+
   const handleUserMedia = useCallback(() => {
     setPermissionDenied(false);
     resetInactivityTimer();
@@ -104,9 +126,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen }) => {
   // Scanning interval effect
   useEffect(() => {
     if (isOpen && !isFrozen && !permissionDenied && !showResult) {
-      scanIntervalRef.current = setInterval(async () => {
-        await scanForBarcode(webcamRef, isFrozen, showResult);
-      }, 500);
+      scanIntervalRef.current = setInterval(scanForBarcode, 500);
     } else {
       if (scanIntervalRef.current) {
         clearInterval(scanIntervalRef.current);
@@ -141,8 +161,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen }) => {
 
   return (
     <div className="fixed inset-0 bg-black z-40 flex flex-col">
-      <CameraControls facingMode={facingMode} toggleCamera={toggleCamera} />
-      
       {timeoutWarning && <TimeoutWarning countdown={countdown} />}
 
       <div className="flex-1 relative overflow-hidden">
@@ -166,34 +184,50 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen }) => {
                 onUserMediaError={handleUserMediaError}
               />
             )}
-            
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="relative">
-                {!showResult ? (
-                  <ScanningFrame isFrozen={isFrozen} />
-                ) : (
-                  <div className="bg-white/95 backdrop-blur-sm rounded-lg p-6 max-w-sm mx-4 pointer-events-auto shadow-2xl">
-                    <ProductResult
-                      product={product}
-                      scannedBarcode={scannedBarcode}
-                      isLoading={isLoadingProduct}
-                      showShareButton={showShareButton}
-                      onDismiss={dismissResult}
-                      onShare={handleShare}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
           </>
         )}
       </div>
 
-      {!permissionDenied && !showResult && (
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/50 to-transparent">
-          <div className="flex items-center justify-center">
-            <CaptureButton isFrozen={isFrozen} onClick={toggleFreeze} />
+      {/* Result overlay */}
+      {showResult && (
+        <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/50">
+          <div className="bg-white/95 backdrop-blur-sm rounded-lg p-6 max-w-sm mx-4 shadow-2xl">
+            <ProductResult
+              product={product}
+              scannedBarcode={scannedBarcode}
+              isLoading={isLoadingProduct}
+              showShareButton={showShareButton}
+              onDismiss={dismissResult}
+              onShare={handleShare}
+            />
           </div>
+        </div>
+      )}
+
+      {/* Bottom controls */}
+      {!permissionDenied && !showResult && (
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/50 to-transparent z-40">
+          <div className="flex items-center justify-around">
+            {/* Manual input button */}
+            <div className="">
+              <button
+                onClick={() => setShowManualInput(true)}
+                className="p-3 bg-black/30 hover:bg-black/50 rounded-full transition-colors backdrop-blur-sm"
+                title="Manual input"
+              >
+                <Keyboard className="w-6 h-6 text-white" />
+              </button>
+            </div>
+            <CaptureButton isFrozen={isFrozen} onClick={toggleFreeze} />
+            <CameraControls facingMode={facingMode} toggleCamera={toggleCamera} />
+          </div>
+        </div>
+      )}
+
+      {/* Scanning frame */}
+      {!showResult && !permissionDenied && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+          <ScanningFrame isFrozen={isFrozen} />
         </div>
       )}
     </div>

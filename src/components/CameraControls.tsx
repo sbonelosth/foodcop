@@ -7,7 +7,12 @@ interface CameraControlsProps {
 }
 
 export const CameraControls: React.FC<CameraControlsProps> = ({ facingMode, toggleCamera }) => (
-  <div className="absolute top-4 left-4 right-16 z-10 flex justify-start items-center">
+  <div className="flex justify-start items-center">
+    {facingMode === 'user' && (
+      <span className="fixed top-0 left-0 right-0 w-full text-xs text-center text-yellow-300 bg-black/30 p-2 backdrop-blur-sm z-10">
+        Front camera - may have difficulty scanning
+      </span>
+    )}
     <div className="flex items-center space-x-4">
       <button
         onClick={toggleCamera}
@@ -16,11 +21,6 @@ export const CameraControls: React.FC<CameraControlsProps> = ({ facingMode, togg
       >
         <RotateCcw className="w-6 h-6 text-white" />
       </button>
-      {facingMode === 'user' && (
-        <span className="text-xs text-yellow-300 bg-black/30 px-2 py-1 rounded backdrop-blur-sm">
-          Front camera - may have difficulty scanning
-        </span>
-      )}
     </div>
   </div>
 );

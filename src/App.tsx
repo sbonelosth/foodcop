@@ -62,21 +62,11 @@ export default function App() {
 				<img src={logo} alt="FoodCop" className="w-32 h-auto" />
 			</div>
 
-			{/* Manual input button */}
-			<div className="absolute top-4 right-4 z-50">
-				<button
-					onClick={() => setShowManualInput(true)}
-					className="p-3 bg-black/30 hover:bg-black/50 rounded-full transition-colors backdrop-blur-sm"
-					title="Manual input"
-				>
-					<Keyboard className="w-6 h-6 text-white" />
-				</button>
-			</div>
-
 			<BarcodeScanner
 				isOpen={true}
 				onClose={() => {}} // No close functionality since this is the main interface
 				onScan={handleBarcodeSubmit}
+				setShowManualInput={setShowManualInput}
 			/>
 		</div>
 	);

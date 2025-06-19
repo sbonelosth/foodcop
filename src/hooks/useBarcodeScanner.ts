@@ -28,31 +28,14 @@ export const useBarcodeScanner = (onScan: (barcode: string) => void) => {
       setProduct(productData);
       setShowShareButton(true);
       onScan(barcode);
+      return true; // Return true for successful detection
     } catch (error) {
       console.error('Error fetching product info:', error);
+      return false;
     } finally {
       setIsLoadingProduct(false);
     }
   }, [onScan]);
-
-  const scanForBarcode = useCallback(async (webcamRef: React.RefObject<any>, isFrozen: boolean, showResult: boolean) => {
-    if (isFrozen || !webcamRef.current || showResult) return;
-    
-    const imageSrc = webcamRef.current.getScreenshot();
-    if (imageSrc) {
-      try {
-        const result = await codeReader.decodeFromImage(undefined, imageSrc);
-        if (result) {
-          const barcode = result.getText();
-          await handleBarcodeDetected(barcode);
-          return true;
-        }
-      } catch (error) {
-        // Continue scanning if no barcode is detected
-      }
-    }
-    return false;
-  }, [codeReader, handleBarcodeDetected]);
 
   const resetScanner = useCallback(() => {
     setScannedBarcode('');
@@ -66,8 +49,8 @@ export const useBarcodeScanner = (onScan: (barcode: string) => void) => {
     product,
     isLoadingProduct,
     showShareButton,
-    scanForBarcode,
-    resetScanner,
     handleBarcodeDetected,
+    resetScanner,
+    codeReader, // Expose codeReader for use in the component
   };
 };
