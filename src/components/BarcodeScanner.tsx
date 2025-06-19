@@ -225,13 +225,13 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
             {/* Scanning Frame */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="relative">
-                {/* Main scanning frame */}
                 {/* Instructions */}
-                <div className="mt-4 text-center">
+                <div className="mt-4 text-center pb-4">
                   <p className="text-white text-sm bg-black/50 px-3 py-1 rounded backdrop-blur-sm">
                     {isFrozen ? 'Frame frozen - tap capture to resume' : 'Position barcode within frame'}
                   </p>
                 </div>
+                {/* Main scanning frame */}
                 <div className="w-64 h-40 border-2 border-white/70 rounded-lg relative">
                   {/* Corner indicators */}
                   <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-green-400 rounded-tl-lg"></div>
