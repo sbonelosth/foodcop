@@ -295,13 +295,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
               }`}></div>
             </button>
           </div>
-          
-          {/* Status Text */}
-          <div className="text-center mt-4">
-            <p className="text-white text-sm">
-              {isFrozen ? 'Tap to resume scanning' : 'Tap to freeze frame'}
-            </p>
-          </div>
         </div>
       )}
     </div>
