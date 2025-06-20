@@ -1,7 +1,7 @@
 import React from 'react';
 import { Share2, CheckCircle, AlertTriangle } from 'lucide-react';
 import { getFlagEmoji } from '../utils/flagUtils';
-import type { Product } from '../types/index';
+import type { Product } from '../types';
 
 interface ProductResultProps {
   product: Product | null;

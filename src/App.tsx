@@ -4,6 +4,7 @@ import ManualInput from "./components/ManualInput";
 import { validateBarcode, fetchProductInfo } from "./utils/barcodeUtils";
 import type { Product } from "./types";
 import logo from "../public/assets/logo.svg";
+import rsa from "../public/assets/world.png"
 
 export default function App() {
 	const [showManualInput, setShowManualInput] = useState(false);
@@ -32,6 +33,9 @@ export default function App() {
 	if (showManualInput) {
 		return (
 			<div className="min-h-screen bg-gray-100">
+				<div className="absolute right-2 top-2 text-2xl">
+					<img src={rsa} alt="RSA" className="w-8 aspect-square border border-1 border-gray-800/50 rounded-full" />
+				</div>
 				<img src={logo} alt="logo" className="mx-auto w-1/2 logo pt-4" />
 				<ManualInput
 					onSubmit={handleBarcodeSubmit}
@@ -55,15 +59,9 @@ export default function App() {
 	}
 
 	return (
-		<div className="min-h-screen bg-black">
-			{/* Logo overlay */}
-			<div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-				<img src={logo} alt="FoodCop" className="w-32 h-auto" />
-			</div>
-
+		<div className="min-h-screen">
 			<BarcodeScanner
 				isOpen={true}
-				onClose={() => {}} // No close functionality since this is the main interface
 				onScan={handleBarcodeSubmit}
 				setShowManualInput={setShowManualInput}
 			/>

@@ -5,10 +5,10 @@ interface ScanningFrameProps {
 }
 
 export const ScanningFrame: React.FC<ScanningFrameProps> = ({ isFrozen }) => (
-  <>
-    <div className="w-full absolute -top-16 left-1/2 transform -translate-x-1/2 text-center">
-      <p className="text-white text-sm bg-black/50 px-3 py-1 rounded backdrop-blur-sm">
-        {isFrozen ? 'Frame frozen - tap capture to resume' : 'Position barcode within frame'}
+  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">      
+    <div className="w-full absolute bottom-0 text-center">
+      <p className="text-white text-sm py-2 glass-bg">
+        {isFrozen ? 'Paused - Tap capture to resume' : 'Position barcode within the frame'}
       </p>
     </div>
     
@@ -24,5 +24,5 @@ export const ScanningFrame: React.FC<ScanningFrameProps> = ({ isFrozen }) => (
         </div>
       )}
     </div>
-  </>
+  </div>
 );

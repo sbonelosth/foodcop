@@ -11,10 +11,10 @@ import { useInactivityTimer } from '../hooks/useInactivityTimer';
 import type { BarcodeScannerProps } from '../types';
 import { Keyboard } from 'lucide-react';
 
-const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose, setShowManualInput }) => {
+const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, setShowManualInput }) => {
   const webcamRef = useRef<Webcam>(null);
   const scanIntervalRef = useRef<ReturnType<typeof setInterval>>();
-  
+
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [isFrozen, setIsFrozen] = useState(false);
   const [frozenImage, setFrozenImage] = useState<string>('');
@@ -61,7 +61,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
 
   const handleShare = useCallback(async () => {
     if (!scannedBarcode || !product) return;
-    
+
     const shareData = {
       title: 'FoodCop - Scanned Product',
       text: `Product: ${product.name}\nBarcode: ${scannedBarcode}\nCountry: ${product.countryName}\nSafety: ${product.isValid && product.found ? 'Safe' : 'Not Safe'}`,
@@ -95,7 +95,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
 
   const scanForBarcode = useCallback(async () => {
     if (isFrozen || !webcamRef.current || showResult) return;
-    
+
     const imageSrc = webcamRef.current.getScreenshot();
     if (imageSrc) {
       try {
@@ -132,7 +132,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
         clearInterval(scanIntervalRef.current);
       }
     }
-    
+
     return () => {
       if (scanIntervalRef.current) {
         clearInterval(scanIntervalRef.current);
@@ -145,7 +145,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
     if (isOpen) {
       resetInactivityTimer();
     }
-    
+
     return () => {
       if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
     };
@@ -160,7 +160,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
   };
 
   return (
-    <div className="fixed inset-0 bg-black z-40 flex flex-col">
+    <div className="fixed inset-0 bg-black flex flex-col">
       {timeoutWarning && <TimeoutWarning countdown={countdown} />}
 
       <div className="flex-1 relative overflow-hidden">
@@ -169,9 +169,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
         ) : (
           <>
             {isFrozen && frozenImage ? (
-              <img 
-                src={frozenImage} 
-                alt="Frozen frame" 
+              <img
+                src={frozenImage}
+                alt="Frozen frame"
                 className="w-full h-full object-cover camera-transition"
               />
             ) : (
@@ -204,30 +204,26 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, onClose
         </div>
       )}
 
+      {/* Scanning frame */}
+      {!showResult && !permissionDenied && (
+          <ScanningFrame isFrozen={isFrozen} />
+      )}
+
       {/* Bottom controls */}
       {!permissionDenied && !showResult && (
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/50 to-transparent z-40">
+        <div className="absolute bottom-0 left-0 right-0 p-6 pb-16 bg-gradient-to-t from-black/50 to-transparent">
           <div className="flex items-center justify-around">
             {/* Manual input button */}
-            <div className="">
-              <button
-                onClick={() => setShowManualInput(true)}
-                className="p-3 bg-black/30 hover:bg-black/50 rounded-full transition-colors backdrop-blur-sm"
-                title="Manual input"
-              >
-                <Keyboard className="w-6 h-6 text-white" />
-              </button>
-            </div>
+            <button
+              onClick={() => setShowManualInput(true)}
+              className="p-3 bg-black/30 hover:bg-black/50 rounded-full transition-colors backdrop-blur-sm"
+              title="Manual input"
+            >
+              <Keyboard className="w-6 h-6 text-white" />
+            </button>
             <CaptureButton isFrozen={isFrozen} onClick={toggleFreeze} />
             <CameraControls facingMode={facingMode} toggleCamera={toggleCamera} />
           </div>
-        </div>
-      )}
-
-      {/* Scanning frame */}
-      {!showResult && !permissionDenied && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-          <ScanningFrame isFrozen={isFrozen} />
         </div>
       )}
     </div>

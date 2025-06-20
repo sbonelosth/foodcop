@@ -9,7 +9,7 @@ interface CameraControlsProps {
 export const CameraControls: React.FC<CameraControlsProps> = ({ facingMode, toggleCamera }) => (
   <div className="flex justify-start items-center">
     {facingMode === 'user' && (
-      <span className="fixed top-0 left-0 right-0 w-full text-xs text-center text-yellow-300 bg-black/30 p-2 backdrop-blur-sm z-10">
+      <span className="fixed top-0 left-0 right-0 w-full text-sm text-center text-yellow-300 p-2 glass-bg z-10">
         Front camera - may have difficulty scanning
       </span>
     )}

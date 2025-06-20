@@ -17,6 +17,5 @@ export interface ScanResult {
 export interface BarcodeScannerProps {
   onScan: (barcode: string) => void;
   isOpen: boolean;
-  onClose: () => void;
   setShowManualInput: (show: boolean) => void;
 }
