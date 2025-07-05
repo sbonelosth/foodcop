@@ -265,7 +265,6 @@ export const fetchManufacturerAndIsFoodWithGemini = async (productName: string):
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
-			console.log("Gemini response:", parsed);
             return {
                 manufacturer: parsed.manufacturer || "Unknown Manufacturer",
                 isFood: !!parsed.isFood
