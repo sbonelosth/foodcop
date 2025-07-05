@@ -236,15 +236,17 @@ export const fetchProductInfo = async (barcode: string): Promise<any> => {
 
 export const fetchManufacturerAndIsFoodWithGemini = async (productName: string): Promise<{ manufacturer: string; isFood: boolean }> => {
     try {
+		const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+		const modelId = import.meta.env.VITE_GEMINI_MODEL_ID;
         let prompt = `Given the product name "${productName}", answer the following as JSON:
 		{
-		"manufacturer": "What is the manufacturer name for ${productName}? Respond with only the manufacturer name.",
-		"isFood": <true if food, false if non-food>
+			"manufacturer": "What is the manufacturer name for ${productName}? Respond with only the manufacturer name.",
+			"isFood": <true if food, false if non-food>
 		}
 		Respond with only the JSON.`;
 
         const geminiRes = await fetch(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyBxG4jaR6W6hIuggGRx5GZ4Q56aPwSmTlc",
+            `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`,
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
