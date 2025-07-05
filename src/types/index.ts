@@ -7,6 +7,7 @@ export interface Product {
 	countryName: string;
 	isValid: boolean;
 	found: boolean;
+	isFood?: boolean;
 }
 
 export interface ScanResult {

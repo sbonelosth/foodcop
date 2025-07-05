@@ -157,36 +157,129 @@ export const validateBarcode = (
 };
 
 export const fetchProductInfo = async (barcode: string): Promise<any> => {
-	try {
-		const response = await fetch(
-			`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`
-		);
+    try {
+        // 1. Try OpenFoodFacts
+        const response = await fetch(
+            `https://world.openfoodfacts.org/api/v2/product/${barcode}.json`
+        );
+        const data = await response.json();
+		
+		let productName = "";
+        let imageUrl = data?.product?.image_url;
         
-		const data = await response.json();
-
-		if (data.status === 1) {
-			const name = (data.product.product_type === "food") ? data.product.product_name || "Unknown Product" : "Non-food Product";
-			const allergens = data.product.allergens.slice(3);
-			return {
-				name,
-				manufacturer:
-					data.product.brands ||
-					data.product.brand_owner ||
-					"Unknown Manufacturer",
-				allergens: allergens || "Unknown Allergens",
-				image: data.product.image_url,
-				found: true,
-			};
+        let allergens =
+		(data?.product?.allergens && data.product.allergens.slice(3)) ||
+		"Unknown Allergens";
+        let found = data.status === 1;
+		
+		// Product name from Barcode List
+		const corsProxy = "https://corsproxy.io/?";
+		const blRes = await fetch(
+			`${corsProxy}https://barcode-list.com/barcode/EN/barcode-${barcode}/Search.htm`
+		);
+		const blHtml = await blRes.text();
+		const match = blHtml.match(
+			/<h1[^>]*class=["'][^"']*pageTitle[^"']*["'][^>]*>([\s\S]*?)<\/h[12]>/i
+		);
+		
+		if (match && match[1]) {
+			productName = match[1].replace(/ - Barcode:.*/, "").trim();
+			productName = productName.startsWith("Search") ? data?.product?.product_name || "Unknown Product" : productName;
+			found = true;
 		}
+		
+		const aiResponse = await fetchManufacturerAndIsFoodWithGemini(productName);
+		let manufacturer =
+		data?.product?.brands ||
+		data?.product?.brand_owner ||
+		aiResponse.manufacturer ||
+		"Unknown Manufacturer";
+        // 3. If no image, try Bing Image Search (scraping)
+        if (!imageUrl && productName && productName !== "Unknown Product") {
+            try {
+                const query = encodeURIComponent(productName);
+                const bingRes = await fetch(
+                    `https://corsproxy.io/?https://www.bing.com/images/search?q=${query}&form=HDRSC2`
+                );
+                const bingHtml = await bingRes.text();
+                const imgMatch = bingHtml.match(
+                    /<img[^>]+src="([^"]+)"[^>]*class="mimg"[^>]*>/i
+                );
+                if (imgMatch && imgMatch[1]) {
+                    imageUrl = imgMatch[1];
+                }
+            } catch (e) {
+                console.warn("Bing image scraping failed:", e);
+            }
+        }
 
-		throw new Error("Product not found");
-	} catch (error) {
-		console.error("Error fetching product info:", error);
-		return {
-			name: "Non-food Product",
-			manufacturer: "Unknown Manufacturer",
-			image: undefined,
-			found: false,
-		};
-	}
+        // 4. Compose result (Gemini classification should be done server-side)
+        return {
+            name: productName,
+            manufacturer,
+            allergens,
+            image: imageUrl,
+            found,
+			isFood: aiResponse.isFood
+            // isFood: await classifyWithGemini(imageUrl) // Do this on your backend!
+        };
+    } catch (error) {
+        console.error("Error fetching product info:", error);
+        return {
+            name: "Refer to product packaging",
+            manufacturer: "Refer to product packaging",
+            image: undefined,
+            found: false,
+        };
+    }
+};
+
+export const fetchManufacturerAndIsFoodWithGemini = async (productName: string): Promise<{ manufacturer: string; isFood: boolean }> => {
+    try {
+        let prompt = `Given the product name "${productName}", answer the following as JSON:
+		{
+		"manufacturer": "What is the manufacturer name for ${productName}? Respond with only the manufacturer name.",
+		"isFood": <true if food, false if non-food>
+		}
+		Respond with only the JSON.`;
+
+        const geminiRes = await fetch(
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyBxG4jaR6W6hIuggGRx5GZ4Q56aPwSmTlc",
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            parts: [
+                                { text: prompt }
+                            ]
+                        }
+                    ]
+                })
+            }
+        );
+        const geminiData = await geminiRes.json();
+        const text =
+            geminiData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+			console.log("Gemini response:", parsed);
+            return {
+                manufacturer: parsed.manufacturer || "Unknown Manufacturer",
+                isFood: !!parsed.isFood
+            };
+        }
+        return {
+            manufacturer: "Unknown Manufacturer",
+            isFood: false
+        };
+    } catch (error) {
+        console.error("Gemini fetch error:", error);
+        return {
+            manufacturer: "Unknown Manufacturer",
+            isFood: false
+        };
+    }
 };

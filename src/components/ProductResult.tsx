@@ -37,15 +37,22 @@ export const ProductResult: React.FC<ProductResultProps> = ({
         <h3 className="font-semibold text-gray-900 text-sm capitalize mr-4">
           {product.name !== "Non-food Product" ? product.name : "Unknown Product"}
         </h3>
-        {product.isValid && product.found && product.name !== "Non-food Product" ? (
-          <div className="flex items-center space-x-1">
-            <CheckCircle className="w-4 h-4 text-green-500" />
-            <span className="text-xs font-medium text-green-600">Safe</span>
-          </div>
+        {product.isValid && product.found ? (
+          product.isFood ? (
+            <div className="flex items-center space-x-1">
+              <span className="text-xs font-medium text-green-600">Safe</span>
+              <CheckCircle className="w-4 h-4 text-green-500" />
+            </div>
+          ) : (
+            <div className="flex items-center space-x-1">
+              <span className="text-xs font-medium text-yellow-600">Non-Food</span>
+              <AlertTriangle className="w-4 h-4 text-yellow-500" />
+            </div>
+          )
         ) : (
           <div className="flex items-center space-x-1">
-            <AlertTriangle className="w-4 h-4 text-red-500" />
             <span className="text-xs font-medium text-red-600">Not Safe</span>
+            <AlertTriangle className="w-4 h-4 text-red-500" />
           </div>
         )}
       </div>
@@ -74,7 +81,7 @@ export const ProductResult: React.FC<ProductResultProps> = ({
         </div>
       )}
 
-      <div className="bg-gray-100 p-2 rounded text-center">
+      <div className="bg-gray-100/50 border border-white/0 p-2 rounded text-center">
         <p className="text-xs text-gray-600 mb-1">Barcode:</p>
         <p className="font-mono text-sm text-gray-900">{scannedBarcode}</p>
       </div>
@@ -98,7 +105,7 @@ export const ProductResult: React.FC<ProductResultProps> = ({
       <div className="flex space-x-2 pt-2">
         <button
           onClick={onDismiss}
-          className="flex-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs rounded transition-colors"
+          className="flex-1 px-3 py-2 bg-[#8cc342] hover:bg-[#8cc342e1] text-white font-bold text-xs rounded transition-colors"
         >
           Scan Another
         </button>

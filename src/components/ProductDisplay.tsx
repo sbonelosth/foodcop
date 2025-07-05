@@ -33,22 +33,22 @@ const ProductDisplay: React.FC<ProductDisplayProps> = ({
 					{product.isValid && product.name}
 					{!product.isValid && "Unknown Product"}
 				</h2>
-				{product.isValid &&
-					product.found &&
-					product.name !== "Non-food Product" && (
-						<div className="flex items-center space-x-2">
-							<span className="text-sm font-medium text-green-500">
-								Safe
-							</span>
-							<CheckCircle className="w-6 h-6 text-green-500" />
+				{product.isValid && product.found ? (
+					product.isFood ? (
+						<div className="flex items-center space-x-1">
+							<span className="text-xs font-medium text-green-600">Safe</span>
+							<CheckCircle className="w-4 h-4 text-green-500" />
 						</div>
-					)}
-				{showCounterfeitWarning && (
-					<div className="flex items-center space-x-2">
-						<span className="text-sm font-medium text-yellow-500">
-							Not Safe
-						</span>
-						<AlertTriangle className="w-6 h-6 text-yellow-500" />
+					) : (
+						<div className="flex items-center space-x-1">
+							<span className="text-xs font-medium text-yellow-600">Non-Food</span>
+							<AlertTriangle className="w-4 h-4 text-yellow-500" />
+						</div>
+					)
+				) : (
+					<div className="flex items-center space-x-1">
+						<span className="text-xs font-medium text-red-600">Not Safe</span>
+						<AlertTriangle className="w-4 h-4 text-red-500" />
 					</div>
 				)}
 			</div>

@@ -191,7 +191,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, setShow
       {/* Result overlay */}
       {showResult && (
         <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/50">
-          <div className="bg-white/95 backdrop-blur-sm rounded-lg p-6 max-w-sm mx-4 shadow-2xl">
+          <div className="bg-white/50 backdrop-blur-sm rounded-lg p-6 max-w-sm mx-4 shadow-2xl">
             <ProductResult
               product={product}
               scannedBarcode={scannedBarcode}
