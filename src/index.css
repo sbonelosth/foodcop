@@ -13,7 +13,7 @@ body {
 .logo {
     /* make the logo responsive */
     width: 50%;
-    max-width: 200px
+    max-width: 200px;
 }
 
 /* Custom animations for scanner */
@@ -25,6 +25,14 @@ body {
     100% {
         transform: translateY(100%);
     }
+}
+
+td {
+    @apply text-sm sm:text-base border border-gray-300 p-2;
+}
+
+.td-label {
+    @apply w-32 font-medium pr-4;
 }
 
 .animate-scan {

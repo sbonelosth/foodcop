@@ -16,7 +16,7 @@ export const PermissionDenied: React.FC<PermissionDeniedProps> = ({ onRetry }) =
       </p>
       <button
         onClick={onRetry}
-        className="px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
+        className="px-6 py-2 bg-blue-500 hover:bg-blue-600 transition-colors"
       >
         Retry
       </button>

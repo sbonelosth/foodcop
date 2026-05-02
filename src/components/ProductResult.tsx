@@ -63,13 +63,13 @@ function LoadingSheet() {
       <div className="w-9 h-[3px] bg-white/15 rounded-full mx-auto mb-5" />
       <div className="animate-pulse space-y-3">
         <div className="h-3 bg-white/10 rounded-full w-1/4" />
-        <div className="h-5 bg-white/10 rounded-xl w-3/4" />
-        <div className="mt-4 rounded-2xl overflow-hidden border border-white/[0.05]">
+        <div className="h-5 bg-white/10 w-3/4" />
+        <div className="mt-4 overflow-hidden border border-white/[0.05]">
           <div className="h-10 bg-white/[0.06]" />
           <div className="h-10 bg-white/[0.04]" />
           <div className="h-10 bg-white/[0.06]" />
         </div>
-        <div className="h-11 bg-[#8cc342]/20 rounded-2xl mt-4" />
+        <div className="h-11 bg-[#8cc342]/20 mt-4" />
       </div>
     </div>
   );
@@ -96,11 +96,11 @@ export const ProductResult: React.FC<ProductResultProps> = ({
         }
       `}</style>
 
-      <div className="pr-sheet">
+      <div className="pr-sheet z-50">
         {isLoading || !product ? (
           <LoadingSheet />
         ) : (
-          <div className="bg-[#0e0e0e] border-t border-white/[0.06] rounded-t-[28px] px-5 pt-3 pb-8">
+          <div className="bg-[#0e0e0e] border-t border-white/[0.06] z-50 px-5 pt-3 pb-8">
             {/* Drag handle */}
             <div className="w-9 h-[3px] bg-white/15 rounded-full mx-auto mb-5" />
 
@@ -136,16 +136,26 @@ export const ProductResult: React.FC<ProductResultProps> = ({
               <DataRow
                 label="Allergens"
                 value={
-                  <span className="capitalize">
+                  <span className="">
                     {product.allergens || "None listed"}
                   </span>
                 }
               />
+              {product.category && (
+                <DataRow
+                  label="Category"
+                  value={
+                    <span className="capitalize">
+                      {product.category}
+                    </span>
+                  }
+                />
+              )}
             </div>
 
             {/* Country mismatch advisory */}
             {product.countryMismatch && (
-              <div className="flex items-start gap-2.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3.5 mb-3">
+              <div className="flex items-start gap-2.5 bg-amber-500/10 border border-amber-500/20 p-3.5 mb-3">
                 <Globe className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
                 <p className="text-amber-300/90 text-xs leading-relaxed">
                   Barcode registered in{" "}
@@ -160,7 +170,7 @@ export const ProductResult: React.FC<ProductResultProps> = ({
 
             {/* Counterfeit warning */}
             {!product.isValid && !product.found && (
-              <div className="flex items-start gap-2.5 bg-red-500/10 border border-red-500/20 rounded-2xl p-3.5 mb-3">
+              <div className="flex items-start gap-2.5 bg-red-500/10 border border-red-500/20 p-3.5 mb-3">
                 <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
                 <p className="text-red-300/90 text-xs leading-relaxed">
                   Barcode not found in GS1 records. This product may be
@@ -171,7 +181,7 @@ export const ProductResult: React.FC<ProductResultProps> = ({
 
             {/* Prefix/found mismatch note */}
             {!product.isValid && product.found && (
-              <div className="flex items-start gap-2.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3.5 mb-3">
+              <div className="flex items-start gap-2.5 bg-amber-500/10 border border-amber-500/20 p-3.5 mb-3">
                 <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
                 <p className="text-amber-300/90 text-xs leading-relaxed">
                   Product found in database but its barcode prefix doesn't match
@@ -182,7 +192,7 @@ export const ProductResult: React.FC<ProductResultProps> = ({
             )}
 
             {/* Barcode chip */}
-            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl py-2.5 px-4 mb-4 flex items-center justify-between">
+            <div className="bg-white/[0.04] border border-white/[0.06] py-2.5 px-4 mb-4 flex items-center justify-between">
               <span className="text-white/30 text-[10px] uppercase tracking-widest">
                 Barcode
               </span>
@@ -195,14 +205,14 @@ export const ProductResult: React.FC<ProductResultProps> = ({
             <div className="flex gap-3">
               <button
                 onClick={onDismiss}
-                className="flex-1 bg-[#8cc342] hover:bg-[#7db535] active:opacity-80 text-white font-semibold text-sm rounded-2xl py-3.5 transition-colors"
+                className="flex-1 bg-[#8cc342] hover:bg-[#7db535] active:opacity-80 text-white font-semibold text-sm py-3.5 transition-colors"
               >
                 Scan Another
               </button>
               {showShareButton && (
                 <button
                   onClick={onShare}
-                  className="bg-white/[0.08] hover:bg-white/[0.13] active:bg-white/[0.06] text-white rounded-2xl px-4 py-3.5 transition-colors"
+                  className="bg-white/[0.08] hover:bg-white/[0.13] active:bg-white/[0.06] text-white px-4 py-3.5 transition-colors"
                 >
                   <Share2 className="w-4 h-4" />
                 </button>

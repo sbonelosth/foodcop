@@ -9,6 +9,7 @@ export interface Product {
 	found: boolean;
 	isFood?: boolean;
 	countryMismatch?: boolean;
+	category?: string;
 }
 
 export interface ScanResult {

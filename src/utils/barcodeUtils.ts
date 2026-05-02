@@ -163,24 +163,28 @@ export const getUserCountryCode = async (): Promise<string> => {
 
 export const fetchProductInfo = async (barcode: string): Promise<any> => {
   try {
-    // 1. Try OpenFoodFacts — seed productName immediately so Gemini always
-    //    receives something meaningful even if barcode-list fails later.
+    // 1. Try OpenFoodFacts first for core data.
     const response = await fetch(
       `https://world.openfoodfacts.org/api/v2/product/${barcode}.json`
     );
     const data = await response.json();
 
-    // Use OFF product name as the baseline; barcode-list may override below.
-    let productName =
-      data?.product?.product_name ||
-      data?.product?.product_name_en ||
-      "";
-
+    let productName = "";
     let imageUrl = data?.product?.image_url;
     let found = data.status === 1;
 
+    // OpenFoodFacts is a food database — if it's found here, it's food.
+    let isFood = false;
+    let category = "";
+    if (found) {
+      isFood = true;
+      const tags: string[] = data?.product?.categories_tags ?? [];
+      if (tags.length > 0) {
+        category = tags[0].replace(/^[a-z-]+:/, "").replace(/-/g, " ");
+      }
+    }
+
     // Build allergens from the tags arrays, stripping "en:" prefixes.
-    // allergens_tags covers direct allergens; traces_tags covers may-contain.
     const allergenTags: string[] = [
       ...(data?.product?.allergens_tags ?? []),
       ...(data?.product?.traces_tags ?? []),
@@ -191,8 +195,14 @@ export const fetchProductInfo = async (barcode: string): Promise<any> => {
     const allergens =
       allergenNames.length > 0 ? allergenNames.join(", ") : "None listed";
 
-    // 2. Try barcode-list for a human-readable product name.
-    //    This is isolated so a network failure here doesn't abort the whole fetch.
+    // Manufacturer from OFF (primary source)
+    const manufacturer =
+      data?.product?.brands ||
+      data?.product?.brand_owner ||
+      "Unknown Manufacturer";
+
+    // 2. Try barcode-list for a richer product name (includes weight etc).
+    //    Kept isolated so a network failure here doesn't abort the whole fetch.
     try {
       const corsProxy = "https://corsproxy.io/?";
       const blRes = await fetch(
@@ -204,7 +214,6 @@ export const fetchProductInfo = async (barcode: string): Promise<any> => {
       );
       if (match?.[1]) {
         const blName = match[1].replace(/ - Barcode:.*/, "").trim();
-        // Only use if it's a real product entry, not "Search results for…"
         if (blName && !blName.toLowerCase().startsWith("search")) {
           productName = blName;
           found = true;
@@ -214,20 +223,15 @@ export const fetchProductInfo = async (barcode: string): Promise<any> => {
       console.warn("Barcode-list fetch failed:", e);
     }
 
-    // Final fallback if both sources returned nothing
-    if (!productName) productName = `Product ${barcode}`;
+    // Fallback name from OFF if barcode-list didn't return anything usable.
+    if (!productName) {
+      productName =
+        data?.product?.product_name ||
+        data?.product?.product_name_en ||
+        `Product ${barcode}`;
+    }
 
-    // 3. Ask Gemini for manufacturer + food classification.
-    //    productName is always non-empty at this point.
-    const aiResponse = await fetchManufacturerAndIsFoodWithGemini(productName);
-
-    const manufacturer =
-      data?.product?.brands ||
-      data?.product?.brand_owner ||
-      aiResponse.manufacturer ||
-      "Unknown Manufacturer";
-
-    // 4. If no image from OFF, try Bing image scraping
+    // 3. If no image from OFF, try Bing image scraping
     if (!imageUrl) {
       try {
         const query = encodeURIComponent(productName);
@@ -250,7 +254,8 @@ export const fetchProductInfo = async (barcode: string): Promise<any> => {
       allergens,
       image: imageUrl,
       found,
-      isFood: aiResponse.isFood,
+      isFood,
+      category,
     };
   } catch (error) {
     console.error("Error fetching product info:", error);
@@ -261,46 +266,8 @@ export const fetchProductInfo = async (barcode: string): Promise<any> => {
       image: undefined,
       found: false,
       isFood: false,
+      category: "",
     };
   }
 };
 
-export const fetchManufacturerAndIsFoodWithGemini = async (
-  productName: string
-): Promise<{ manufacturer: string; isFood: boolean }> => {
-  try {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    const modelId = import.meta.env.VITE_GEMINI_MODEL_ID;
-    const prompt = `Given the product name "${productName}", respond ONLY with a JSON object (no markdown, no extra text):
-{
-  "manufacturer": "<manufacturer name only>",
-  "isFood": <true if this is a food or beverage product, false if non-food>
-}`;
-
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
-      }
-    );
-    const geminiData = await geminiRes.json();
-    const text =
-      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        manufacturer: parsed.manufacturer || "Unknown Manufacturer",
-        isFood: !!parsed.isFood,
-      };
-    }
-    return { manufacturer: "Unknown Manufacturer", isFood: false };
-  } catch (error) {
-    console.error("Gemini fetch error:", error);
-    return { manufacturer: "Unknown Manufacturer", isFood: false };
-  }
-};

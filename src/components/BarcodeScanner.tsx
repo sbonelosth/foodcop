@@ -212,7 +212,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, setShow
                   <img
                     src={product!.image}
                     alt={product!.name}
-                    className="max-h-full max-w-full object-contain rounded-2xl"
+                    className="max-h-full max-w-full object-cover"
                     style={{
                       filter: 'drop-shadow(0 8px 48px rgba(0,0,0,0.9))',
                     }}
