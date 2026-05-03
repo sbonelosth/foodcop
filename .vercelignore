@@ -1,7 +1,6 @@
 android/
 ios/
 capacitor.config.ts
-mockData.ts
 .env.development
 *.development
 600*
