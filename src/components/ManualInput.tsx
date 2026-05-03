@@ -26,10 +26,10 @@ const ManualInput: React.FC<ManualInputProps> = ({
 
 	return (
 		<div className="max-w-2xl mx-auto p-4">
-			<div className="bg-white p-6">
+			<div className="bg-white pt-2 p-6 border border-gray-300">
 				<div className="flex items-center justify-between mb-4">
 					<h1 className="text-lg font-bold text-gray-900">
-						Product Scanner
+						Barcode Scanner
 					</h1>
 					<button
 						onClick={onBackToCamera}
@@ -62,7 +62,7 @@ const ManualInput: React.FC<ManualInputProps> = ({
 						disabled={
 							isLoading || (barcode.length !== 8 && barcode.length !== 13)
 						}
-						className="w-full px-4 py-2 bg-[#8CC342E1] text-white hover:bg-[#8CC342] focus:ring-2 focus:ring-[#8CC342] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+						className="w-full px-4 py-2 bg-[#00874ce1] text-white hover:bg-[#00874c] focus:ring-2 focus:ring-[#00874c] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
 					>
 						{isLoading ? (
 							<>

@@ -3,8 +3,7 @@ import BarcodeScanner from "./components/BarcodeScanner";
 import ManualInput from "./components/ManualInput";
 import { validateBarcode, fetchProductInfo } from "./utils/barcodeUtils";
 import type { Product } from "./types";
-import logo from "../public/assets/logo.svg";
-import rsa from "../public/assets/world.png"
+import logo from "../public/assets/foodcop.png";
 
 export default function App() {
 	const [showManualInput, setShowManualInput] = useState(false);
@@ -33,9 +32,6 @@ export default function App() {
 	if (showManualInput) {
 		return (
 			<div className="min-h-screen bg-gray-100">
-				<div className="absolute right-2 top-2 text-2xl">
-					<img src={rsa} alt="RSA" className="w-8 aspect-square border border-1 border-gray-800/50 rounded-full" />
-				</div>
 				<img src={logo} alt="logo" className="mx-auto w-1/2 logo pt-4" />
 				<ManualInput
 					onSubmit={handleBarcodeSubmit}
@@ -44,13 +40,18 @@ export default function App() {
 					isLoading={isLoading}
 				/>
 				<div className="h-[10vh]"></div>
-				<footer className="bg-gray-800 text-white py-4 text-center fixed bottom-0 w-full">
+				<footer className="bg-gray-800 text-white py-4 text-center w-full mx-0">
 					<p className="text-xs">
 						Made with ❤️ by{" "}
-						<a href="https://sbonelo.vercel.app" className="underline pointer">
+						<a href="https://sbonelo.vercel.app" className="underline pointer" target="_blank">
 							abumanga project
 						</a>{" "}
 						<br />
+						<p className="text-xs pb-1">
+							Powered by <a href="https://world.openfoodfacts.org/" className="underline pointer" target="_blank">Open Food Facts</a>
+						</p>
+						{/* devider */}
+						<hr className="w-[95%] my-2 mx-auto" />
 						&copy; {new Date().getFullYear()} FoodCop. All rights reserved.
 					</p>
 				</footer>

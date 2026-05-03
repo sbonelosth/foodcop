@@ -10,6 +10,7 @@ import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 import { useInactivityTimer } from '../hooks/useInactivityTimer';
 import type { BarcodeScannerProps } from '../types';
 import { Keyboard } from 'lucide-react';
+import { isDevMock } from '../utils/mockData';
 
 const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, setShowManualInput }) => {
   const webcamRef = useRef<Webcam>(null);
@@ -64,7 +65,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, setShow
 
     const shareData = {
       title: 'FoodCop – Scanned Product',
-      text: `Product: ${product.name}\nBarcode: ${scannedBarcode}\nCountry: ${product.countryName}\nSafety: ${safetyLabel}`,
+      text: `Product: ${product.product_name}\nBarcode: ${scannedBarcode}\nCountry: ${product.countryName}\nSafety: ${safetyLabel}`,
       url: window.location.href,
     };
 
@@ -149,7 +150,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, setShow
   };
 
   // Whether there's a product image ready to display
-  const hasProductImage = showResult && !isLoadingProduct && product?.image;
+  const hasProductImage = showResult && !isLoadingProduct && product?.image_url;
 
   return (
     <>
@@ -170,6 +171,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, setShow
 
       <div className="fixed inset-0 bg-black flex flex-col">
         {timeoutWarning && <TimeoutWarning countdown={countdown} />}
+
+        {isDevMock() && (
+          <div className="absolute top-0 inset-x-0 z-50 bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest text-center py-1">
+            Dev Mock Mode — Not Production
+          </div>
+        )}
 
         {/* ── Camera / product-image area ─────────────────────────────────── */}
         <div className="flex-1 relative overflow-hidden">
@@ -210,8 +217,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, setShow
               {hasProductImage && (
                 <div className="bc-product-img absolute inset-0 flex items-center justify-center p-8">
                   <img
-                    src={product!.image}
-                    alt={product!.name}
+                    src={product!.image_url || ""}
+                    alt={product!.product_name || "Product image"}
                     className="max-h-full max-w-full object-cover"
                     style={{
                       filter: 'drop-shadow(0 8px 48px rgba(0,0,0,0.9))',
@@ -227,7 +234,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, setShow
                     <circle cx="20" cy="20" r="17" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
                     <path
                       d="M20 3 A17 17 0 0 1 37 20"
-                      stroke="#8cc342"
+                      stroke="#00874c"
                       strokeWidth="3"
                       strokeLinecap="round"
                     />
@@ -268,6 +275,19 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, isOpen, setShow
               <CaptureButton isFrozen={isFrozen} onClick={toggleFreeze} />
               <CameraControls facingMode={facingMode} toggleCamera={toggleCamera} />
             </div>
+            {isDevMock() && (
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={async () => {
+                    const success = await handleBarcodeDetected("6001275000003");
+                    if (success) setShowResult(true);
+                  }}
+                  className="px-4 py-2 bg-red-600/80 hover:bg-red-600 text-white text-xs font-semibold rounded-full transition-colors backdrop-blur-sm"
+                >
+                  Mock Scan
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

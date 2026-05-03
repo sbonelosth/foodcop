@@ -1,7 +1,7 @@
 import React from "react";
-import { AlertTriangle, CheckCircle, Globe, Package } from "lucide-react";
+import { Globe } from "lucide-react";
 import type { Product } from "../types";
-
+import { DataRow, SafetyBadge } from "./ProductResult";
 interface ProductDisplayProps {
   product: Product | null;
   isLoading: boolean;
@@ -28,83 +28,57 @@ const ProductDisplay: React.FC<ProductDisplayProps> = ({ product, isLoading }) =
   return (
     <div className="p-6 space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm sm:text-base font-semibold capitalize">
-          {product.name || "Unknown Product"}
-        </h2>
-
-        {/* {product.isValid ? (
-          product.isFood ? (
-            <div className="flex items-center space-x-1">
-              <span className="text-xs font-medium text-green-600">Safe</span>
-              <CheckCircle className="w-4 h-4 text-green-500" />
-            </div>
-          ) : (
-            <div className="flex items-center space-x-1">
-              <span className="text-xs font-medium text-yellow-600">Non-Food</span>
-              <Package className="w-4 h-4 text-yellow-500" />
-            </div>
-          )
-        ) : (
-          <div className="flex items-center space-x-1">
-            <span className="text-xs font-medium text-red-600">Not Safe</span>
-            <AlertTriangle className="w-4 h-4 text-red-500" />
-          </div>
-        )} */}
+      <div className="flex items-start justify-between mb-4 gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-gray-500 text-[10px] font-medium uppercase tracking-widest mb-1">
+            Product
+          </p>
+          <h3 className="font-semibold text-[15px] leading-snug capitalize">
+            {product.product_name}
+          </h3>
+        </div>
+        <SafetyBadge product={product} />
       </div>
 
       {/* Product image */}
       <div className="relative w-full aspect-square sm:aspect-video bg-gray-200 overflow-hidden">
-        <div className="absolute w-full flex justify-end bg-white sm:bg-transparent top-0 right-0 px-3 py-1.5">
-          {product.isValid ? (
-            product.isFood ? (
-              <div className="flex items-center space-x-1">
-                <span className="text-xs font-medium text-green-600">Safe</span>
-                <CheckCircle className="w-4 h-4 text-green-500" />
-              </div>
-            ) : (
-              <div className="flex items-center space-x-1">
-                <span className="text-xs font-medium text-yellow-600">Non-Food</span>
-                <Package className="w-4 h-4 text-yellow-500" />
-              </div>
-            )
-          ) : (
-            <div className="flex items-center space-x-1">
-              <span className="text-xs font-medium text-red-600">Not Safe</span>
-              <AlertTriangle className="w-4 h-4 text-red-500" />
-            </div>
-          )}
-        </div>
         {<img
-          src={product.image || "/assets/placeholder.png"}
-          alt={product.name}
-          className={`w-full aspect-square sm:aspect-video object-cover sm:object-contain bg-gray-200 ${product.image ? '' : 'opacity-20'}`}
+          src={product.image_url || "/assets/placeholder.png"}
+          alt={product.product_name || "Unknown Product"}
+          className={`w-full aspect-square sm:aspect-video object-cover sm:object-contain bg-gray-200 ${product.image_url ? '' : 'opacity-20'}`}
         />}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="table-fixed w-full min-w-[300px] border-collapse border border-gray-300">
-          <tbody>
-            <tr>
-              <td className="td-label">Manufacturer</td>
-              <td className="td-data">{product.manufacturer}</td>
-            </tr>
-            <tr>
-              <td className="td-label">Country</td>
-              <td className="td-data">{product.countryName}</td>
-            </tr>
-            <tr>
-              <td className="td-label">Allergens</td>
-              <td className="td-data">{product.allergens || "None listed"}</td>
-            </tr>
-            {product.category && (
-              <tr>
-                <td className="td-label">Category</td>
-                <td className="td-data">{product.category}</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* Info rows */}
+      <div className="overflow-hidden border border-gray-500 mb-3">
+        <DataRow label="Manufacturer" value={product.manufacturer_name} color="gray-500"/>
+        {product.countryCode && (
+          <DataRow
+            label="Country"
+            value={product.countryName}
+            color="gray-500"
+          />
+        )}
+        <DataRow
+          label="Allergens"
+          value={
+            <span className="capitalize">
+              {product.allergens || "None listed"}
+            </span>
+          }
+          color="gray-500"
+        />
+        {product.category && (
+          <DataRow
+            label="Category"
+            value={
+              <span className="capitalize">
+                {product.category}
+              </span>
+            }
+            color="gray-500"
+          />
+        )}
       </div>
 
         {/* Country mismatch advisory */}

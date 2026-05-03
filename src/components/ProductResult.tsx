@@ -1,6 +1,5 @@
 import React from 'react';
 import { Share2, CheckCircle, AlertTriangle, Globe, Package } from 'lucide-react';
-import { getFlagEmoji } from '../utils/flagUtils';
 import type { Product } from '../types';
 
 interface ProductResultProps {
@@ -20,7 +19,7 @@ interface ProductResultProps {
 //   isFood = false → Non-Food (amber)
 // countryMismatch is a soft advisory, shown separately.
 
-function SafetyBadge({ product }: { product: Product }) {
+export function SafetyBadge({ product }: { product: Product }) {
   if (!product.isValid) {
     return (
       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/15 border border-red-500/20">
@@ -31,9 +30,9 @@ function SafetyBadge({ product }: { product: Product }) {
   }
   if (product.isFood) {
     return (
-      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#8cc342]/15 border border-[#8cc342]/20">
-        <CheckCircle className="w-3.5 h-3.5 text-[#8cc342]" />
-        <span className="text-xs font-semibold text-[#8cc342]">Safe</span>
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#00874c]/15 border border-[#00874c]/20">
+        <CheckCircle className="w-3.5 h-3.5 text-[#00874c]" />
+        <span className="text-xs font-semibold text-[#00874c]">Safe</span>
       </div>
     );
   }
@@ -45,11 +44,11 @@ function SafetyBadge({ product }: { product: Product }) {
   );
 }
 
-function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
+export function DataRow({ label, value, color }: { label: string; value: React.ReactNode; color?: string }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05] last:border-b-0">
-      <span className="text-white/40 text-xs tracking-wide">{label}</span>
-      <span className="text-white/80 text-xs font-medium text-right max-w-[58%] leading-relaxed">
+    <div className={`flex items-center justify-between px-4 py-3 border-b border-${color || 'white/[0.05]'} last:border-b-0`}>
+      <span className={`text-${color || 'white'} text-xs tracking-wide`}>{label}</span>
+      <span className={`text-xs font-medium text-right max-w-[58%] leading-relaxed text-${color || 'white'}`}>
         {value}
       </span>
     </div>
@@ -69,7 +68,7 @@ function LoadingSheet() {
           <div className="h-10 bg-white/[0.04]" />
           <div className="h-10 bg-white/[0.06]" />
         </div>
-        <div className="h-11 bg-[#8cc342]/20 mt-4" />
+        <div className="h-11 bg-[#00874c]/20 mt-4" />
       </div>
     </div>
   );
@@ -111,32 +110,25 @@ export const ProductResult: React.FC<ProductResultProps> = ({
                   Product
                 </p>
                 <h3 className="text-white font-semibold text-[15px] leading-snug capitalize">
-                  {product.name}
+                  {product.product_name}
                 </h3>
               </div>
               <SafetyBadge product={product} />
             </div>
 
             {/* Info rows */}
-            <div className="rounded-2xl overflow-hidden border border-white/[0.06] mb-3">
-              <DataRow label="Manufacturer" value={product.manufacturer} />
+            <div className="overflow-hidden border border-white/[0.06] mb-3">
+              <DataRow label="Manufacturer" value={product.manufacturer_name} />
               {product.countryCode && (
                 <DataRow
-                  label="Registered in"
-                  value={
-                    <span className="flex items-center gap-1.5 justify-end">
-                      <span className="text-base leading-none">
-                        {getFlagEmoji(product.countryCode)}
-                      </span>
-                      {product.countryName}
-                    </span>
-                  }
+                  label="Country"
+                  value={product.countryName}
                 />
               )}
               <DataRow
                 label="Allergens"
                 value={
-                  <span className="">
+                  <span className="capitalize">
                     {product.allergens || "None listed"}
                   </span>
                 }
@@ -205,7 +197,7 @@ export const ProductResult: React.FC<ProductResultProps> = ({
             <div className="flex gap-3">
               <button
                 onClick={onDismiss}
-                className="flex-1 bg-[#8cc342] hover:bg-[#7db535] active:opacity-80 text-white font-semibold text-sm py-3.5 transition-colors"
+                className="flex-1 bg-[#00874ce1] text-white hover:bg-[#00874c] focus:ring-2 focus:ring-[#00874c] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 Scan Another
               </button>

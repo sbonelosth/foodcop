@@ -1,3 +1,5 @@
+import { isDevMock, MOCK_PRODUCT } from "./mockData";
+
 const GS1_PREFIXES = {
   "0": { code: "US", name: "USA and Canada" },
   "1": { code: "US", name: "USA" },
@@ -153,7 +155,7 @@ export const validateBarcode = (
 // Returns empty string on failure so callers can handle gracefully.
 export const getUserCountryCode = async (): Promise<string> => {
   try {
-    const res = await fetch("https://ipapi.co/json/");
+    const res = await fetch("https://corsproxy.io/?https://ipapi.co/json/");
     const data = await res.json();
     return data.country_code || "";
   } catch {
@@ -162,112 +164,38 @@ export const getUserCountryCode = async (): Promise<string> => {
 };
 
 export const fetchProductInfo = async (barcode: string): Promise<any> => {
+  if (isDevMock()) {
+    console.log("[DEV MOCK] Returning mock product for barcode:", barcode);
+    return { ...MOCK_PRODUCT, found: true, isFood: true };
+  }
+
+  const empty = {
+    product_name: null,
+    manufacturer_name: null,
+    quantity: null,
+    country_of_origin: null,
+    category: null,
+    allergens: null,
+    image_url: null,
+    found: false,
+    isFood: false,
+  };
+
   try {
-    // 1. Try OpenFoodFacts first for core data.
-    const response = await fetch(
-      `https://world.openfoodfacts.org/api/v2/product/${barcode}.json`
-    );
-    const data = await response.json();
-
-    let productName = "";
-    let imageUrl = data?.product?.image_url;
-    let found = data.status === 1;
-
-    // OpenFoodFacts is a food database — if it's found here, it's food.
-    let isFood = false;
-    let category = "";
-    if (found) {
-      isFood = true;
-      const tags: string[] = data?.product?.categories_tags ?? [];
-      if (tags.length > 0) {
-        category = tags[0].replace(/^[a-z-]+:/, "").replace(/-/g, " ");
-      }
+    const res = await fetch(`/api/product?barcode=${encodeURIComponent(barcode)}`);
+    if (!res.ok) {
+      console.warn("Product API error:", res.status);
+      return empty;
     }
-
-    // Build allergens from the tags arrays, stripping "en:" prefixes.
-    const allergenTags: string[] = [
-      ...(data?.product?.allergens_tags ?? []),
-      ...(data?.product?.traces_tags ?? []),
-    ];
-    const allergenNames = allergenTags
-      .map((t: string) => t.replace(/^[a-z-]+:/, ""))
-      .filter(Boolean);
-    const allergens =
-      allergenNames.length > 0 ? allergenNames.join(", ") : "None listed";
-
-    // Manufacturer from OFF (primary source)
-    const manufacturer =
-      data?.product?.brands ||
-      data?.product?.brand_owner ||
-      "Unknown Manufacturer";
-
-    // 2. Try barcode-list for a richer product name (includes weight etc).
-    //    Kept isolated so a network failure here doesn't abort the whole fetch.
-    try {
-      const corsProxy = "https://corsproxy.io/?";
-      const blRes = await fetch(
-        `${corsProxy}https://barcode-list.com/barcode/EN/barcode-${barcode}/Search.htm`
-      );
-      const blHtml = await blRes.text();
-      const match = blHtml.match(
-        /<h1[^>]*class=["'][^"']*pageTitle[^"']*["'][^>]*>([\s\S]*?)<\/h[12]>/i
-      );
-      if (match?.[1]) {
-        const blName = match[1].replace(/ - Barcode:.*/, "").trim();
-        if (blName && !blName.toLowerCase().startsWith("search")) {
-          productName = blName;
-          found = true;
-        }
-      }
-    } catch (e) {
-      console.warn("Barcode-list fetch failed:", e);
-    }
-
-    // Fallback name from OFF if barcode-list didn't return anything usable.
-    if (!productName) {
-      productName =
-        data?.product?.product_name ||
-        data?.product?.product_name_en ||
-        `Product ${barcode}`;
-    }
-
-    // 3. If no image from OFF, try Bing image scraping
-    if (!imageUrl) {
-      try {
-        const query = encodeURIComponent(productName);
-        const bingRes = await fetch(
-          `https://corsproxy.io/?https://www.bing.com/images/search?q=${query}&form=HDRSC2`
-        );
-        const bingHtml = await bingRes.text();
-        const imgMatch = bingHtml.match(
-          /<img[^>]+src="([^"]+)"[^>]*class="mimg"[^>]*>/i
-        );
-        if (imgMatch?.[1]) imageUrl = imgMatch[1];
-      } catch (e) {
-        console.warn("Bing image scraping failed:", e);
-      }
-    }
-
+    const data = await res.json();
     return {
-      name: productName,
-      manufacturer,
-      allergens,
-      image: imageUrl,
-      found,
-      isFood,
-      category,
+      ...data,
+      found: !!data.product_name,
+      isFood: !!data.product_name,
     };
-  } catch (error) {
-    console.error("Error fetching product info:", error);
-    return {
-      name: "Refer to product packaging",
-      manufacturer: "Refer to product packaging",
-      allergens: "Unknown",
-      image: undefined,
-      found: false,
-      isFood: false,
-      category: "",
-    };
+  } catch (e) {
+    console.warn("Product API fetch failed:", e);
+    return empty;
   }
 };
 

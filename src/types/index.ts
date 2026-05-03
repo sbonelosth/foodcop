@@ -1,15 +1,18 @@
 export interface Product {
-    name: string;
-	manufacturer: string;
-	allergens?: string;
-	image?: string;
-	countryCode: string;
-	countryName: string;
-	isValid: boolean;
-	found: boolean;
-	isFood?: boolean;
-	countryMismatch?: boolean;
-	category?: string;
+  product_name: string | null;
+  manufacturer_name: string | null;
+  quantity: string | null;
+  country_of_origin: string | null;
+  category: string | null;
+  allergens: string | null;
+  image_url: string | null;
+  // Barcode metadata (set by frontend)
+  countryCode: string;
+  countryName: string;
+  isValid: boolean;
+  found: boolean;
+  isFood?: boolean;
+  countryMismatch?: boolean;
 }
 
 export interface ScanResult {
