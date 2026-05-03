@@ -26,7 +26,6 @@ dist-ssr
 *.development
 600*
 
-mock*
 android
 ios
 
