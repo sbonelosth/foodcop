@@ -228,5 +228,11 @@ app.get("/api/product", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`API server running on http://localhost:${PORT}`));
+// Vercel serverless export
+export default app;
+
+// Local dev entrypoint (not Vercel)
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, () => console.log(`API server running on http://localhost:${PORT}`));
+}

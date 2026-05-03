@@ -46,12 +46,13 @@ export default function App() {
 						<a href="https://sbonelo.vercel.app" className="underline pointer" target="_blank">
 							abumanga project
 						</a>{" "}
-						<br />
-						<p className="text-xs pb-1">
-							Powered by <a href="https://world.openfoodfacts.org/" className="underline pointer" target="_blank">Open Food Facts</a>
-						</p>
-						{/* devider */}
-						<hr className="w-[95%] my-2 mx-auto" />
+					</p>
+					<p className="text-xs pb-1">
+						Powered by <a href="https://world.openfoodfacts.org/" className="underline pointer" target="_blank">Open Food Facts</a>
+					</p>
+					{/* devider */}
+					<hr className="w-[95%] my-2 mx-auto" />
+					<p className="text-xs">
 						&copy; {new Date().getFullYear()} FoodCop. All rights reserved.
 					</p>
 				</footer>
